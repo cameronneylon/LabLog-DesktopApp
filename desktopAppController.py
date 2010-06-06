@@ -36,6 +36,7 @@ class desktopApp(QMainWindow):
         apply(QMainWindow.__init__,(self, ) + args)
         self.setGeometry(100, 100, 600, 300)
         self.initActions()
+        self.initPrefsDoc()
         self.initMenuBar()
         #self.initToolBar()
         self.initStatusBar()
@@ -56,7 +57,24 @@ class desktopApp(QMainWindow):
         self.connect(self.actions['multiPostDataUpload'],
                      SIGNAL('activated()'),
                      self.slotMultiPostDataUpload)
-        
+    
+    def initPrefsDoc(self):
+        """Function that initialises the preferences doc
+
+        The preferences doc holds the lists of available servers as
+        well as the relationship between servers, blogs, and 
+        usernames. The method initialises the document for the prefs
+        and then connects the Signal sigDocCurrentBlogServerSet to 
+        the function that will we reset the menus with the appropriate
+        blogs and usernames for that server.
+        """
+
+        # Create and initialise the Preferences Document
+        self.prefs = desktopAppDoc.PrefsDoc()
+
+        # Connect the signal to trigger the re-setting of the menus
+        self.connect(self.prefs, SIGNAL('sigDocCurrentBlogServerSet'),
+                               self.resetBlogandUserMenu)
 
     def initMenuBar(self):
 
@@ -73,16 +91,7 @@ class desktopApp(QMainWindow):
         # Then add Blog Actions Menu to menu bar
         self.menuBar().addMenu(self.blogactionsmenu)
 
-    def initStatusBar(self):
-        self.statusBar().showMessage('Ready...')
-
-    ################################################
-    # UI and Document initialisation routines
-    ###############################################
-
-    def initBlogandUserMenu(self):
-
-        # Initialise the menu
+        # Initialise the Blogs and Usernames menu
         self.blogandusermenu = QMenu()
         self.blogandusermenu.clear()
         self.blogandusermenu.setTitle('Blogs and usernames')
@@ -93,7 +102,7 @@ class desktopApp(QMainWindow):
         self.blogservermenu = QMenu()
         self.blogservermenu.setTitle('Select Blog Server')
         i=0
-        for server in self.doc.blogserverlist:
+        for server in self.prefs.blogserverlist:
             self.blogservermenu.addAction(server,
                       lambda i=i: self.slotBlogServerMenuActivated(i))
             i+=1
@@ -102,7 +111,8 @@ class desktopApp(QMainWindow):
         self.blogselectionmenu = QMenu()
         self.blogselectionmenu.setTitle('Select Blog')
         i=0
-        for blog in self.doc.servertoblogmapping[self.doc.currentblogserver]:
+        for blog in self.prefs.servertoblogmapping[
+                                           self.prefs.currentblogserver]:
             self.blogselectionmenu.addAction(blog,
                       lambda i=i: self.slotBlogSelectionMenuActivated(i))
             i+=1
@@ -111,7 +121,8 @@ class desktopApp(QMainWindow):
         self.usernamemenu = QMenu()
         self.usernamemenu.setTitle('Select username')
         i=0
-        for username in self.doc.usernamemapping[self.doc.currentblogserver]:
+        for username in self.prefs.usernamemapping[
+                                      self.prefs.currentblogserver]:
             self.usernamemenu.addAction(username, 
                       lambda i=i: self.slotUsernameMenuActivated(i))
             i+=1
@@ -120,6 +131,14 @@ class desktopApp(QMainWindow):
         self.blogandusermenu.addMenu(self.blogselectionmenu)
         self.blogandusermenu.addMenu(self.usernamemenu)
 
+
+
+    def initStatusBar(self):
+        self.statusBar().showMessage('Ready...')
+
+    ################################################
+    # UI and Document initialisation routines
+    ###############################################
 
     def initMultiPostDataUploadDoc(self):
         self.doc = desktopAppDoc.MultiPostDataUploadDoc()
@@ -144,12 +163,7 @@ class desktopApp(QMainWindow):
         self.connect(self.view, SIGNAL('sigViewUseFilenameCheckedFALSE'),
                                 self.notifyDocUseFilenameCheckedFalse)
 
-        # Connect Document events to slot functions
-        # Key event is sigDocCurrentBlogServerSet which requires
-        # the Blog and User menus to be re-set
 
-        self.connect(self.doc, SIGNAL('sigDocCurrentBlogServerSet'),
-                               self.resetBlogandUserMenu)
 
 
 ###########################################
@@ -166,7 +180,6 @@ class desktopApp(QMainWindow):
     def slotMultiPostDataUpload(self):
         self.initMultiPostDataUploadDoc()
         self.initMultiPostDataUploadView()
-        self.initBlogandUserMenu()
 
 
     ####################
@@ -174,13 +187,13 @@ class desktopApp(QMainWindow):
     ####################
 
     def slotBlogServerMenuActivated(self, index):
-        self.doc.setCurrentBlogServer(index)
+        self.prefs.setCurrentBlogServer(index)
 
     def slotBlogSelectionMenuActivated(self, index):
-        self.doc.setCurrentBlog(index)
+        self.prefs.setCurrentBlog(index)
 
     def slotUsernameMenuActivated(self, index):
-        self.doc.setCurrentUsername(index)
+        self.prefs.setCurrentUsername(index)
 
 
     ####################
@@ -241,7 +254,8 @@ class desktopApp(QMainWindow):
         # Reset the blog selection menu
         self.blogselectionmenu.clear()
         i=0
-        for blog in self.doc.servertoblogmapping[self.doc.currentblogserver]:
+        for blog in self.prefs.servertoblogmapping[
+                                            self.prefs.currentblogserver]:
             self.blogselectionmenu.addAction(blog,
                       lambda i=i: self.slotBlogSelectionMenuActivated(i))
             i+=1
@@ -249,7 +263,8 @@ class desktopApp(QMainWindow):
         # Then the user name selection
         self.usernamemenu.clear()
         i=0
-        for username in self.doc.usernamemapping[self.doc.currentblogserver]:
+        for username in self.prefs.usernamemapping[
+                                       self.prefs.currentblogserver]:
             self.usernamemenu.addAction(username, 
                       lambda i=i: self.slotUsernameMenuActivated(i))
             i+=1

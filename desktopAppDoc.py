@@ -30,19 +30,14 @@ import logging
 import lablogpost
 from PyQt4.QtCore import *
 
-class AbstractPostDoc(QObject):
-    """Abstract base class with common methods for Post Documents
+class PrefsDoc(QObject):
+    """Class for containing preferences and blog information
 
-    The Abstract class currently holds notions of the blog server
-    blogs, usernames, and current blogs as well as elements for
-    the post objects of PostTitle and PostContent. Both are 
-    assumed to be QStrings. Specific document classes will treat
-    these strings in different ways. If a non-QString Title or
-    Content are required these methods should be overwritten.
-
-    The doUpload method is provided here as a place holder and should
-    be overwritten for each specific document class. It is here simply
-    to provide the template for the more specific upload methods.
+    This class handles the record of the currently selected
+    blog server, blog, and username. The document is created
+    when the application runs and persists for the the running
+    of the session. At the moment it doesn't persist between
+    sessions.
     """
 
     def __init__(self, *args):
@@ -53,11 +48,7 @@ class AbstractPostDoc(QObject):
         self.initServertoBlogMapping()
         self.initCurrentUsername()
         self.initCurrentBlog()
-
-        self.initPostTitle()
-        self.initPostContent()
-
-        self.status = []
+        self.status=[]
 
     def initBlogServerList(self):
         self.blogserverlist = ['http://biolab.isis.rl.ac.uk',
@@ -160,6 +151,30 @@ class AbstractPostDoc(QObject):
 
     def getCurrentUsername(self):
         return self.currentusername
+
+
+class AbstractPostDoc(QObject):
+    """Abstract base class with common methods for Post Documents
+
+    The Abstract class currently holds notions of the blog server
+    blogs, usernames, and current blogs as well as elements for
+    the post objects of PostTitle and PostContent. Both are 
+    assumed to be QStrings. Specific document classes will treat
+    these strings in different ways. If a non-QString Title or
+    Content are required these methods should be overwritten.
+
+    The doUpload method is provided here as a place holder and should
+    be overwritten for each specific document class. It is here simply
+    to provide the template for the more specific upload methods.
+    """
+
+    def __init__(self, *args):
+        QObject.__init__(self, *args)
+
+        self.initPostTitle()
+        self.initPostContent()
+
+        self.status = []
 
     def initPostTitle(self):
         self.posttitle = ''
