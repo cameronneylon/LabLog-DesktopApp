@@ -28,7 +28,7 @@ from xml.etree import ElementTree as ET
 
 MAX_MEM = 50000
 DEFAULT_URL = 'http://biolab.isis.rl.ac.uk'
-DEFAULT_UID = ############################ Insert test UID here
+DEFAULT_UID = 'a' ## insert UID here for testing
 DEFAULT_USERNAME = 'cameronneylon.net'
 
 socket.setdefaulttimeout(10)

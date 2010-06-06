@@ -39,6 +39,10 @@ class AbstractPostDoc(QObject):
     assumed to be QStrings. Specific document classes will treat
     these strings in different ways. If a non-QString Title or
     Content are required these methods should be overwritten.
+
+    The doUpload method is provided here as a place holder and should
+    be overwritten for each specific document class. It is here simply
+    to provide the template for the more specific upload methods.
     """
 
     def __init__(self, *args):
@@ -193,6 +197,37 @@ class AbstractPostDoc(QObject):
     def getPostContent(self):
         return self.postcontent
 
+    def doUpload(self):
+        """A template method for creating the Upload Method for subclasses
+
+        This function should be overwritten for any subclass. The application
+        expects the signals described here to notify that an upload is in
+        progress and there the GUI should be disabled and that the upload
+        is complete and the user can now proceed after the appropriate 
+        dialog is created.
+        """
+
+        # Check that required information is available
+        try:
+            assert ((self.posttitle != '') or 
+                    (self.usefilename == True)), 'Need post title'
+            assert self.postcontent != '', 'Need post text'
+        
+        # If insufficient information is available raise a warning dialog
+        except AssertionError, e:
+            self.emit(SIGNAL('sigDocumentError'), (e, ))
+            return False
+
+        self.status.append('Sending data posts to server')
+        self.emit(SIGNAL('sigDocUpdateStatusBar'))
+        self.emit(SIGNAL('sigDocUploading'))
+
+        # DO THE UPLOAD OF POSTS AND DATA HERE
+
+        self.emit(SIGNAL('sigDocFinishedUploading'))
+
+        self.status.append() # INSERT AN APPROPRIATE STATUS MESSAGE
+
 
 class MultiPostDataUploadDoc(AbstractPostDoc):
     """Document for a multi-post directory data upload
@@ -259,8 +294,8 @@ class MultiPostDataUploadDoc(AbstractPostDoc):
     #
     ########################################
 
-    def doMultiPostDataUpload(self):
-        """Method for passing parameters to directory upload methods"""
+    def doUpload(self):
+        """Overwritten method for doing the multiple post upload"""
 
         # Check that required information is available
         try:
@@ -278,7 +313,7 @@ class MultiPostDataUploadDoc(AbstractPostDoc):
 
         self.status.append('Sending data posts to server')
         self.emit(SIGNAL('sigDocUpdateStatusBar'))
-        self.emit(SIGNAL('sigDocMultiPostDataUploading'))
+        self.emit(SIGNAL('sigDocUploading'))
        
         self.filelist = []
         for file in os.listdir(self.datadirectory):

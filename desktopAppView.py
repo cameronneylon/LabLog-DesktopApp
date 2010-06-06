@@ -56,7 +56,7 @@ class AbstractPostView(QWidget):
         self.setGeometry(100, 100, 600, 300)
         self.setWindowTitle('Directory LaBLog Upload')
         self.setFocus()
-        grid = QGridLayout()
+        self.grid = QGridLayout()
 
         # Text box for post names
         self.posttitle = QLabel('Post title')
@@ -93,7 +93,7 @@ class AbstractPostView(QWidget):
         # Action on pressing Upload button
         # TODO generalise the doUpload signal
         self.connect(self.uploadButton, SIGNAL('clicked()'),
-                                        self.emitViewDoUploadDirectory)
+                                        self.emitViewDoUpload)
 
         ####################
         #
@@ -117,9 +117,8 @@ class AbstractPostView(QWidget):
         self.connect(self.doc, SIGNAL('sigDocumentError'),
                                self.notifyUserDocumentError)
 
-        # Multipost data upload in progress
-        # TODO generalise the uploading signal
-        self.connect(self.doc, SIGNAL('sigDocMultiPostDataUploading'),
+        # Post upload in progress, so block the GUI
+        self.connect(self.doc, SIGNAL('sigDocUploading'),
                                self.blockallinputs)
 
         # Multipost data upload complete
@@ -216,14 +215,14 @@ class AbstractPostView(QWidget):
 
 
     # TODO generalise this for all Upload actions
-    def emitViewDoUploadDirectory(self):
+    def emitViewDoUpload(self):
         """Notify the document when the upload button pressed
         """
-        self.emit(SIGNAL('sigViewDoUploadDir'))
+        self.emit(SIGNAL('sigViewDoUpload'))
 
 class MultiPostDataUploadView(AbstractPostView):
     def __init__(self, doc, *args):
-        apply(AbstractPostView.__init__, (self,) + args)
+        apply(AbstractPostView.__init__, (self, doc) + args)
 
 
         # Create checkbox for 'use filenames' option
@@ -234,17 +233,17 @@ class MultiPostDataUploadView(AbstractPostView):
         self.dirTextBox = QLineEdit()
 
         # Setting up the layout of the widget
-        grid.addWidget(self.posttitle, 0, 0)
-        grid.addWidget(self.titleedit, 0, 1)
-        grid.addWidget(self.usefilenamecheck, 0, 2)
-        grid.addWidget(self.posttexttitle, 1, 0)
-        grid.addWidget(self.posttext, 1, 1, 1, 2)
-        grid.addWidget(QLabel(''), 3, 0)
-        grid.addWidget(self.selectDirButton, 4, 0)
-        grid.addWidget(self.dirTextBox, 4, 1, 1, 2)
-        grid.addWidget(self.uploadButton, 5, 2)
+        self.grid.addWidget(self.posttitle, 0, 0)
+        self.grid.addWidget(self.titleedit, 0, 1)
+        self.grid.addWidget(self.usefilenamecheck, 0, 2)
+        self.grid.addWidget(self.posttexttitle, 1, 0)
+        self.grid.addWidget(self.posttext, 1, 1, 1, 2)
+        self.grid.addWidget(QLabel(''), 3, 0)
+        self.grid.addWidget(self.selectDirButton, 4, 0)
+        self.grid.addWidget(self.dirTextBox, 4, 1, 1, 2)
+        self.grid.addWidget(self.uploadButton, 5, 2)
 
-        self.setLayout(grid)
+        self.setLayout(self.grid)
 
         ####################
         # Connections to local actions in the GUI window
@@ -368,7 +367,7 @@ class MultiPostDataUploadView(AbstractPostView):
 
 
     def notifyUserDataUploadComplete(self):
-        """Dialog box triggered when data upload in progress
+        """Dialog box triggered when data upload is complete
         """
         
         message = ("Upload succeeded\n\n For " + str(self.doc.length) + 

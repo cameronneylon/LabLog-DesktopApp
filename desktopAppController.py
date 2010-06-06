@@ -120,14 +120,14 @@ class desktopApp(QMainWindow):
         self.blogandusermenu.addMenu(self.blogselectionmenu)
         self.blogandusermenu.addMenu(self.usernamemenu)
 
+
     def initMultiPostDataUploadDoc(self):
         self.doc = desktopAppDoc.MultiPostDataUploadDoc()
         self.connect(self.doc, SIGNAL('sigDocUpdateStatusBar'),
                                            self.updateStatusBar)
 
-
     def initMultiPostDataUploadView(self):
-        self.view = desktopAppView.MultiPostView(self.doc)
+        self.view = desktopAppView.MultiPostDataUploadView(self.doc)
         self.setCentralWidget(self.view)
 
         # Connect UI event signals to slot functions
@@ -137,8 +137,8 @@ class desktopApp(QMainWindow):
                                 self.notifyDocPostTextModified)
         self.connect(self.view, SIGNAL('sigViewDataDirModified'),
                                 self.notifyDocDataDirModified)
-        self.connect(self.view, SIGNAL('sigViewDoUploadDir'),
-                                self.notifyDocDoUploadDirectory)
+        self.connect(self.view, SIGNAL('sigViewDoUpload'),
+                                self.notifyDocDoUpload)
         self.connect(self.view, SIGNAL('sigViewUseFilenameCheckedTRUE'),
                                 self.notifyDocUseFilenameCheckedTrue)
         self.connect(self.view, SIGNAL('sigViewUseFilenameCheckedFALSE'),
@@ -168,6 +168,7 @@ class desktopApp(QMainWindow):
         self.initMultiPostDataUploadView()
         self.initBlogandUserMenu()
 
+
     ####################
     # Slots from the Blog/Username Menu
     ####################
@@ -181,8 +182,9 @@ class desktopApp(QMainWindow):
     def slotUsernameMenuActivated(self, index):
         self.doc.setCurrentUsername(index)
 
+
     ####################
-    # Slots from the MultiPostDataUpload UI
+    # Slots shared between all the UIs
     ####################
 
     def notifyDocTitleModified(self):
@@ -190,6 +192,22 @@ class desktopApp(QMainWindow):
         """
         logging.debug('Setting Post Title: ' + self.view.titleedit.text())
         self.doc.setPostTitle(self.view.titleedit.text())
+
+    def notifyDocPostTextModified(self):
+        """Notify the document when post content box changed
+        """
+        logging.debug('Setting Post Title: ' + self.view.posttext.toPlainText())
+        self.doc.setPostContent(self.view.posttext.toPlainText())
+
+    def notifyDocDoUpload(self):
+        """Notify the document when the upload button pressed
+        """
+        self.doc.doUpload()
+
+
+    ####################
+    # Slots from the MultiPostDataUpload UI
+    ####################
 
     def notifyDocUseFilenameCheckedTrue(self):
         """Notify the document when usefilename checked
@@ -205,22 +223,12 @@ class desktopApp(QMainWindow):
                       str(self.view.usefilenamecheck.isChecked()))
         self.doc.setUseFilename(False)     
 
-    def notifyDocPostTextModified(self):
-        """Notify the document when post content box changed
-        """
-        logging.debug('Setting Post Title: ' + self.view.posttext.toPlainText())
-        self.doc.setPostContent(self.view.posttext.toPlainText())
-
     def notifyDocDataDirModified(self):
         """Notify the document when data directory box changed
         """
         logging.debug('Setting Post Title: ' + self.view.dirTextBox.text())
         self.doc.setDataDirectory(self.view.dirTextBox.text())
 
-    def notifyDocDoUploadDirectory(self):
-        """Notify the document when the upload button pressed
-        """
-        self.doc.doMultiPostDataUpload()
 
     ####################
     # Slots from the document that require menu or statusbar changes
@@ -251,6 +259,7 @@ class desktopApp(QMainWindow):
         """
 
         self.statusBar().showMessage(self.view.doc.status[-1])
+
 
 def main(args):
     LOG_FILENAME = '/logging.out'
