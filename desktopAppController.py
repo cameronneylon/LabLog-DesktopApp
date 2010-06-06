@@ -131,22 +131,37 @@ class desktopApp(QMainWindow):
         self.blogandusermenu.addMenu(self.blogselectionmenu)
         self.blogandusermenu.addMenu(self.usernamemenu)
 
-
-
     def initStatusBar(self):
         self.statusBar().showMessage('Ready...')
 
     ################################################
     # UI and Document initialisation routines
+    #
+    # For each new form of interaction two initialisation methods are
+    # required, one to initialise the appropriate document which will
+    # be a subclass of AbstractPostDoc and placed in desktopAppDoc.py,
+    # and one to initialise the connected view which will be a subclass
+    # of AbstractPostView and placed in desktopAppView.py. The main
+    # purpose of the initalisation is to connect up the appropriate
+    # signals that are specific to that blog action. Generic connections
+    # are provided by the generic init methods that should be called
+    # by the specific methods.
+    #
     ###############################################
 
-    def initMultiPostDataUploadDoc(self):
-        self.doc = desktopAppDoc.MultiPostDataUploadDoc()
+    def initGeneralDocConnections(self):
+        """The general function for connecting signals common to to all docs
+        """
         self.connect(self.doc, SIGNAL('sigDocUpdateStatusBar'),
                                            self.updateStatusBar)
 
-    def initMultiPostDataUploadView(self):
-        self.view = desktopAppView.MultiPostDataUploadView(self.doc)
+    def initGeneralViewConnections(self):
+        """The general function for connections signals common to all views
+
+        The title text modified and post content modified signals are common
+        to all documents and all views and are therefore handled by this 
+        general method.
+        """
         self.setCentralWidget(self.view)
 
         # Connect UI event signals to slot functions
@@ -154,6 +169,33 @@ class desktopApp(QMainWindow):
                                 self.notifyDocTitleModified)
         self.connect(self.view, SIGNAL('sigViewPostTextModified'),
                                 self.notifyDocPostTextModified)
+
+    def initMultiPostDataUploadDoc(self):
+        """The initialisation method for MultiPostDataUpload Docs
+
+        This also serves as the template for other initialisation methods. THe
+        document must be created before the general init method is called as
+        otherwise the document will not exist to connect the signals from.
+        """
+
+        self.doc = desktopAppDoc.MultiPostDataUploadDoc()
+        self.initGeneralDocConnections()
+
+    def initMultiPostDataUploadView(self):
+        """The initialisation method for MultiPostDataUpload Views
+
+        This also serves as a template for other view initialisation methods.
+        The view must be created before the general init method is called and 
+        also after the document is created as the document is a characteristic
+        of the view.
+        """
+
+        # Create the view
+        self.view = desktopAppView.MultiPostDataUploadView(self.doc)
+        # Call the general connections method
+        self.initGeneralViewConnections()
+
+        # Connect all the signals that are specific to this view/doc pair
         self.connect(self.view, SIGNAL('sigViewDataDirModified'),
                                 self.notifyDocDataDirModified)
         self.connect(self.view, SIGNAL('sigViewDoUpload'),
@@ -177,9 +219,26 @@ class desktopApp(QMainWindow):
     def slotFileQuit(self):
         pass
 
+    ####################
+    # Slots from Blog Actions Menu
+    ####################
+
+
     def slotMultiPostDataUpload(self):
         self.initMultiPostDataUploadDoc()
         self.initMultiPostDataUploadView()
+
+
+    def slotDoSomeOtherInteractionWithTheBlog(self):
+        """A template method for creating new forms of interaction
+
+        To create a new type of action that the application can support on
+        the blog it is necessary to create a method here that will call the
+        intiatilisation methods when the appropriate menu item from the
+        blog actions menu is selected.
+        """
+
+        pass
 
 
     ####################

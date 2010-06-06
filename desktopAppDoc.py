@@ -152,6 +152,18 @@ class PrefsDoc(QObject):
     def getCurrentUsername(self):
         return self.currentusername
 
+####################################################################
+#                                                                  #
+# Post Document Objects                                            #
+#                                                                  #
+# Documents that describe post objects are placed here. The        # 
+# AbstractPostDoc is the base class that should be subtyped to     #
+# create new types of document to support new classes of action.   #
+# In particular the doUpload method will need to be overwritten    #
+# in each case to handle the details of the particular upload      #
+# methods.                                                         #
+#                                                                  #
+####################################################################
 
 class AbstractPostDoc(QObject):
     """Abstract base class with common methods for Post Documents
@@ -303,12 +315,6 @@ class MultiPostDataUploadDoc(AbstractPostDoc):
         return self.datadirectory
 
 
-    ########################################
-    #
-    # Data Upload Methods and additional gumpf
-    #
-    ########################################
-
     def doUpload(self):
         """Overwritten method for doing the multiple post upload"""
 
@@ -351,7 +357,76 @@ class MultiPostDataUploadDoc(AbstractPostDoc):
 
         self.status.append('Uploaded ' + str(self.length) + ' data objects')
 
+
+class MultiPostCreationDoc(AbstractPostDoc):
+    """A class to support the creation of sets of incremented posts
+
+    The MultiPostCreation method is intended to suppor the creation of
+    multiple posts that increment in a predictable way. Usually these
+    will be a set of physical samples, fractions, or reactions that
+    are to be represented by a set of essentially identical posts.
+
+    The document requires only a title, some text, a required number
+    of posts and an overwritten upload method that will incrememnt 
+    through the number of desired posts. Currently the system adds a 
+    number to the end of the post title which increments for each
+    post.
+    """
+
+    def __init__(self, *args):
+        AbstractPostDoc.__init__(self, *args)
+
+        # Internal variable for setting number of posts required
+        self.numposts = 0
+
+
+    def setNumPosts(self, integer):
+        """Function to set the number of posts required
+        """
+
+        try:
+            assert type(integer) == int, 'Number of posts must be integer'
+            self.numposts = integer
+            self.emit(SIGNAL('sigDocNumPostsChanged'), (self.numposts,))
+            return True
+
+        except AssertionError, e:
+            self.emit(SIGNAL('sigDocumentError'), (e, ))
+            return False
+
+    def getNumPosts(self):
+        return self.numposts
+
+    def doUpload(self):
+        """Specific upload method for multiple post creation
+        """
+
+         # Check that required information is available
+        try:
+            assert ((self.posttitle != '') or 
+                    (self.usefilename == True)), 'Need post title'
+            assert self.postcontent != '', 'Need post text'
+            assert self.postnums > 0, 'Doing less than one post?'
+
         
+        # If insufficient information is available raise a warning dialog
+        except AssertionError, e:
+            self.emit(SIGNAL('sigDocumentError'), (e, ))
+            return False
+
+        # TODO signal to notify uploading. Need to sort out passing
+        # of blog id, server, and UID from the preferences document
+        i=1
+        self.post_fail = 0
+        while i <= self.postnums:
+            inputdictionary['title'] = self.postitle + str(i)
+            post = lablogpost.LaBLogPost(**inputdictionary)
+            post.doPost()
+
+        # TODO notify that uploading is complete
+            
+            
+       
 
 ###############################################################
 #
