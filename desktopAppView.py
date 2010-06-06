@@ -19,30 +19,48 @@
 # Dependencies: The application code requires PyQt and Qt to be installed. 
 # The desktopAppDoc module utilises the lablogpost module available with
 # this source distribution and separately with a ccZero public domain
-# waiver at ####. The application requires a range of modules from the 
-# Python 2.6 standard library. 
+# waiver at http://github.com/cameronneylon/LaBLog-Utilities. The 
+# application requires a range of modules from the Python 2.6 standard 
+# library. 
 
 import sys
 import os.path
 from PyQt4.QtGui import *
 from PyQt4.QtCore import *
 
+class AbstractPostView(QWidget):
+    """Abstract base class for UI widgets for each type of action.
 
-class MultiPostView(QWidget):
+    The abstract class provides only the post title, text content
+    and the upload buttons. Layout should be handled in specific
+    subclasses as this will depend on the number of subwidgets and
+    their relative importance. Overall geometry is set in the 
+    abstract class currently to match the main window.
+
+    Window title and labels for Post Title widget are set but should
+    be overwritten in subclasses. Metadata is currently not implemented
+    but should be setup in the abstract class because it is a general
+    requirement. The grid layout is created but not used.
+    """
+
     def __init__(self, doc, *args):
         apply(QWidget.__init__, (self,) + args)
+        
+        # Set the passed document as the document of the view
+        # The document is created by the controller just before
+        # the view so it should be the right type. Probably a good
+        # idea to provide a check of this in each subclass.
         self.doc = doc
 
-        # Set up the window and title
+        # Set up the window, title, grab focus and set layout as grid
         self.setGeometry(100, 100, 600, 300)
         self.setWindowTitle('Directory LaBLog Upload')
         self.setFocus()
         grid = QGridLayout()
 
-        # Text box for post names and checkbox to use filenames
-        self.posttitle = QLabel('Post titles')
+        # Text box for post names
+        self.posttitle = QLabel('Post title')
         self.titleedit = QLineEdit()
-        self.usefilenamecheck = QCheckBox('Use filenames?', self)
 
         # Text box for post text content. Only accepts plain text
         # TODO metadata setting
@@ -50,12 +68,170 @@ class MultiPostView(QWidget):
         self.posttext = QTextEdit()
         self.posttext.setAcceptRichText(False)
 
+        # The upload to blog button
+        self.uploadButton = QPushButton('Upload!', self)
+
+        ####################
+        #
+        # Connections to shared actions to be notified to the document
+        #
+        # These actions need to signal the Controller so as to trigger
+        # other actions. Shared actions implemented in the abstract 
+        # class include the Upload action, changes to post title and to
+        # post content.
+        # 
+        ####################
+
+        # Action on modifying the Post Title line edit box
+        self.connect(self.titleedit, SIGNAL('editingFinished()'),
+                                     self.emitViewTitleModified)
+
+        # Action on modifying the Post Content text edit
+        self.connect(self.posttext, SIGNAL('textChanged()'),
+                                    self.emitViewPostTextModified)
+
+        # Action on pressing Upload button
+        # TODO generalise the doUpload signal
+        self.connect(self.uploadButton, SIGNAL('clicked()'),
+                                        self.emitViewDoUploadDirectory)
+
+        ####################
+        #
+        # Connections to signals originating in the App Document
+        #
+        # Signals to be received from the document are those triggered
+        # on a change in the post title, the post content being 
+        # changed and the data directory being set. This is also
+        # where error messages from the Document get caught.
+        #
+        ####################
+
+        # Change of post title in document
+        self.connect(self.doc, SIGNAL('sigDocPostTitleSet'),
+                               self.setPostTitleLineEdit)
+
+        # Change of post content in document
+        self.connect(self.doc, SIGNAL('sigDocPostContentChanged'),
+                               self.setPostContentTextEdit)
+        # Document error raised
+        self.connect(self.doc, SIGNAL('sigDocumentError'),
+                               self.notifyUserDocumentError)
+
+        # Multipost data upload in progress
+        # TODO generalise the uploading signal
+        self.connect(self.doc, SIGNAL('sigDocMultiPostDataUploading'),
+                               self.blockallinputs)
+
+        # Multipost data upload complete
+        # TODO generalise the upload complete signal
+        self.connect(self.doc, SIGNAL('sigDocFinishedUploading'),
+                               self.notifyUserDataUploadComplete)
+
+
+    ####################
+    #
+    # Methods for handling incoming signals from the Document
+    #
+    # Shared methods are those for when the values of the post title or
+    # post content is changed in the document, when a document error
+    # is raised and when an upload is in progress, requiring that all
+    # the inputs be blocked.
+    #
+    ####################
+
+    def setPostTitleLineEdit(self, signal):
+        """Method triggered when doc signals Post Title Changed
+
+        First check whether is the same as current text so as to
+        prevent race condition. If it is different (e.g. if set
+        via script or macro, then change linedit to match. This
+        method is connected to sigDocPostTitleSet
+        """
+
+        # If incoming string is the same then ignore
+        if self.doc.posttitle == self.titleedit.text():
+            return
+        # If the text edit is disabled then ignore
+        elif self.titleedit.isEnabled() == False:
+            return
+        else:
+            self.titleedit.setText(self.doc.posttitle)
+
+    def setPostContentTextEdit(self, signal):
+        """Method triggered when doc signals Post Content Changed
+
+        First check whether is the same as current text so as to
+        prevent race condition. If it is different (e.g. if set
+        via script or macro, then change linedit to match. This
+        method is connected to sigDocPostContentChanged
+        """
+
+        if self.doc.postcontent == self.posttext.toPlainText():
+            return
+        else:
+            self.posttext.clear()
+            self.posttext.insertPlainText(self.postcontent)
+ 
+    def notifyUserDocumentError(self, e):
+        """Method triggered by Document error catching routines
+        
+        The signal sigDocumentError fires when incorrect parameters
+        are passed to the Document. Under most circumstances this
+        shouldn't bother the user but it is useful for notification
+        purposes.
+        """
+
+        message = "Document Error\n\n" + str(e)
+        errormessage = QMessageBox.warning(self,
+                            'QtMessageBox.warning()', message)
+
+    def blockallinputs(self):
+        """Method called when all inputs need to be deactivated
+
+        Currently called only when a data upload is in progress.
+        """
+
+        self.setDisabled(True)
+
+    ####################
+    #
+    # Methods for notifying actions to the App Controller
+    #
+    # Actions from the GUI that need to notify the document of 
+    # changes. Shared methods in the abstract class include the 
+    # signals triggered by modifying the post title line edit or the 
+    # post content, and the Upload button being pressed.
+    #
+    ####################
+
+    def emitViewTitleModified(self):
+        """Notify the document when title line edit changed
+        """
+        self.emit(SIGNAL('sigViewTitleModified'))
+
+    def emitViewPostTextModified(self):
+        """Notify the document when post content box changed
+        """
+        self.emit(SIGNAL('sigViewPostTextModified'))
+
+
+    # TODO generalise this for all Upload actions
+    def emitViewDoUploadDirectory(self):
+        """Notify the document when the upload button pressed
+        """
+        self.emit(SIGNAL('sigViewDoUploadDir'))
+
+class MultiPostDataUploadView(AbstractPostView):
+    def __init__(self, doc, *args):
+        apply(AbstractPostView.__init__, (self,) + args)
+
+
+        # Create checkbox for 'use filenames' option
+        self.usefilenamecheck = QCheckBox('Use filenames?', self)
+
         # Button to open file dialogue and text edit to display path
         self.selectDirButton = QPushButton('Select directory', self)
         self.dirTextBox = QLineEdit()
-
-        # The upload to blog button
-        self.uploadButton = QPushButton('Upload!', self)
 
         # Setting up the layout of the widget
         grid.addWidget(self.posttitle, 0, 0)
@@ -102,85 +278,45 @@ class MultiPostView(QWidget):
         self.connect(self.usefilenamecheck, SIGNAL('stateChanged(int)'),
                          self.emitFilenameCheckClicked)
 
-        # Action on modifying the Post Title line edit box
-        self.connect(self.titleedit, SIGNAL('editingFinished()'),
-                                     self.emitViewTitleModified)
-
-        # Action on modifying the Post Content text edit
-        self.connect(self.posttext, SIGNAL('textChanged()'),
-                                    self.emitViewPostTextModified)
-
         # Action on modifying the Data Directory text edit
         self.connect(self.dirTextBox, SIGNAL('editingFinished()'),
                                       self.emitViewDataDirModified)
-
-        # Action on pressing Upload button
-        self.connect(self.uploadButton, SIGNAL('clicked()'),
-                                        self.emitViewDoUploadDirectory)
 
 
         ####################
         #
         # Connections to signals originating in the App Document
         #
-        # Signals to be received from the document are those triggered
-        # on a change in the post title, the post content being 
-        # changed and the data directory being set. This is also
-        # where error messages from the Document get caught.
+        # Signals specific to the MultiPostDataUpload View are the
+        # signal emitted when the usefilename flag is changed and
+        # when the data directory is changed. 
         #
         ####################
-
-        # Change of post title in document
-        self.connect(self.doc, SIGNAL('sigDocPostTitleSet'),
-                               self.setPostTitleLineEdit)
 
         # Usefilename state toggled in document
         self.connect(self.doc, SIGNAL('sigDocUseFilenameChanged'),
                                self.enableordisablePostTitleLineEdit)
 
-        # Change of post content in document
-        self.connect(self.doc, SIGNAL('sigDocPostContentChanged'),
-                               self.setPostContentTextEdit)
 
         # Change of data directory
         self.connect(self.doc, SIGNAL('sigDocDataDirectoryChanged'),
                                self.setDataDirectoryLineEdit)
 
-        # Document error raised
-        self.connect(self.doc, SIGNAL('sigDocumentError'),
-                               self.notifyUserDocumentError)
-
-        # Multipost data upload in progress
-        self.connect(self.doc, SIGNAL('sigDocMultiPostDataUploading'),
-                               self.blockallinputs)
-
-        # Multipost data upload complete
-        self.connect(self.doc, SIGNAL('sigDocFinishedUploading'),
-                               self.notifyUserDataUploadComplete)
 
     ####################
     #
     # Methods for handling incoming signals from the Document
     #
+    # Specific methods required for the MultiPostDataUpload view
+    # are to deactivate the PostTitle line edit if the use filename
+    # option is activated, to set the data directory line edit when the
+    # data directory changes in the document. A method is also provided
+    # to trigger a dialog box to select the directory. There is also a 
+    # specific upload finished notification implemented to show how many
+    # of the data objects and posts were successful.
+    #
     ####################
 
-    def setPostTitleLineEdit(self, signal):
-        """Method triggered when doc signals Post Title Changed
-
-        First check whether is the same as current text so as to
-        prevent race condition. If it is different (e.g. if set
-        via script or macro, then change linedit to match. This
-        method is connected to sigDocPostTitleSet
-        """
-
-        # If incoming string is the same then ignore
-        if self.doc.posttitle == self.titleedit.text():
-            return
-        # If the text edit is disabled then ignore
-        elif self.titleedit.isEnabled() == False:
-            return
-        else:
-            self.titleedit.setText(self.doc.posttitle)
 
     def enableordisablePostTitleLineEdit(self, signal):
         """Toggle the state of post title box
@@ -206,21 +342,16 @@ class MultiPostView(QWidget):
                 self.titleedit.setText(self.doc.getPostTitle())
                 self.titleedit.setFocus()
 
-    def setPostContentTextEdit(self, signal):
-        """Method triggered when doc signals Post Content Changed
+    
+    def selectDirectoryDialog(self):
+        """Triggers file dialog to select directory for upload"""
 
-        First check whether is the same as current text so as to
-        prevent race condition. If it is different (e.g. if set
-        via script or macro, then change linedit to match. This
-        method is connected to sigDocPostContentChanged
-        """
+        directory = QFileDialog.getExistingDirectory(self, 
+                    'Open Directory',
+                    '/home')
+        self.dirTextBox.setText(directory)
+        self.doc.setDataDirectory(directory)
 
-        if self.doc.postcontent == self.posttext.toPlainText():
-            return
-        else:
-            self.posttext.clear()
-            self.posttext.insertPlainText(self.postcontent)
- 
     def setDataDirectoryLineEdit(self, signal):
         """Method triggered when doc signals Post Title Changed
 
@@ -235,26 +366,6 @@ class MultiPostView(QWidget):
         else:
             self.dirTextBox.setText(self.doc.datadirectory) 
 
-    def notifyUserDocumentError(self, e):
-        """Method triggered by Document error catching routines
-        
-        The signal sigDocumentError fires when incorrect parameters
-        are passed to the Document. Under most circumstances this
-        shouldn't bother the user but it is useful for notification
-        purposes.
-        """
-
-        message = "Document Error\n\n" + str(e)
-        errormessage = QMessageBox.warning(self,
-                            'QtMessageBox.warning()', message)
-
-    def blockallinputs(self):
-        """Method called when all inputs need to be deactivated
-
-        Currently called only when a data upload is in progress.
-        """
-
-        self.setDisabled(True)
 
     def notifyUserDataUploadComplete(self):
         """Dialog box triggered when data upload in progress
@@ -271,32 +382,18 @@ class MultiPostView(QWidget):
     #
     # Methods for notifying actions to the App Controller
     #
-    # Actions from the GUI that need to notify the document of 
-    # changes include the signals triggered by modifying the
-    # post title line edit, the post content, the data directory
-    # being changed and the Upload button being pressed.
+    # Specific actions from the GUI for the MultiPostDataUpload View 
+    # that need to notify the document of include the signals triggered 
+    # by the data directory being changed and the usefilename checkbox
+    # being selected.
     #
     ####################
-
-    def emitViewTitleModified(self):
-        """Notify the document when title line edit changed
-        """
-        self.emit(SIGNAL('sigViewTitleModified'))
-
-    def emitViewPostTextModified(self):
-        """Notify the document when post content box changed
-        """
-        self.emit(SIGNAL('sigViewPostTextModified'))
 
     def emitViewDataDirModified(self):
         """Notify the document when data directory box changed
         """
         self.emit(SIGNAL('sigViewDataDirModified'))
 
-    def emitViewDoUploadDirectory(self):
-        """Notify the document when the upload button pressed
-        """
-        self.emit(SIGNAL('sigViewDoUploadDir'))
 
     def emitFilenameCheckClicked(self):
         """Action called when Use File Name checkbox is clicked"""
@@ -310,27 +407,10 @@ class MultiPostView(QWidget):
         else:
             pass
 
-    ####################
-    #
-    # Local GUI methods for functionality
-    #
-    # Main functions here are to deactivate the post title box
-    # when the 'usefilenames' checkbox is selected and to call
-    # the directory selection widget when a directory is to be
-    # selected.
-    #
-    ####################
 
 
-    
-    def selectDirectoryDialog(self):
-        """Triggers file dialog to select directory for upload"""
 
-        directory = QFileDialog.getExistingDirectory(self, 
-                    'Open Directory',
-                    '/home')
-        self.dirTextBox.setText(directory)
-        self.doc.setDataDirectory(directory)
+
 
 
 
