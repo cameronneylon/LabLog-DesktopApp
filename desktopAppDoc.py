@@ -194,26 +194,28 @@ class AbstractPostDoc(QObject):
         return self.postcontent
 
 
-class MultiPostDoc(AbstractPostDoc):
+class MultiPostDataUploadDoc(AbstractPostDoc):
     """Document for a multi-post directory data upload
 
     Document model class that describes the information for the 
     posting of a directory of data files as a set of blog posts.
-    Includes information on the possible blog server, selected 
-    blog server, the target blog housed on that server, as well as
-    possible usernames, selected usernames, post content, post 
-    title, whether to use the filenames as post titles, and the
-    local path to the target directory"""
+    A subclass of the Abstract Post Document class that provides
+    additional methods to select a directory of files to 
+    upload, a method to set a flag that will use the filename
+    of each data file as the title of the blog post and the
+    final upload method. 
+
+    If the filenames are not used as post title the given post
+    title simply has a number incremented at the end. Currently
+    the post content is not modified.
+    """
 
     def __init__(self, *args):
         AbstractPostDoc.__init__(self, *args)
 
-        self.initPostTitle()
         self.initUseFilename()
-        self.initPostContent()
-
         self.initDataDirectory()
-        self.status = []
+
 
     def initUseFilename(self):
         self.usefilename = False
@@ -251,11 +253,11 @@ class MultiPostDoc(AbstractPostDoc):
         return self.datadirectory
 
 
-########################################
-#
-# Data Upload Methods and additional gumpf
-#
-########################################
+    ########################################
+    #
+    # Data Upload Methods and additional gumpf
+    #
+    ########################################
 
     def doMultiPostDataUpload(self):
         """Method for passing parameters to directory upload methods"""

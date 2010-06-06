@@ -19,8 +19,9 @@
 # Dependencies: The application code requires PyQt and Qt to be installed. 
 # The desktopAppDoc module utilises the lablogpost module available with
 # this source distribution and separately with a ccZero public domain
-# waiver at ####. The application requires a range of modules from the 
-# Python 2.6 standard library.
+# waiver at http://github.com/cameronneylon/LaBLog-Utilities. The 
+# application requires a range of modules from the Python 2.6 standard 
+# library. 
 
 import sys
 import os.path
@@ -120,7 +121,7 @@ class desktopApp(QMainWindow):
         self.blogandusermenu.addMenu(self.usernamemenu)
 
     def initMultiPostDataUploadDoc(self):
-        self.doc = desktopAppDoc.MultiPostDoc()
+        self.doc = desktopAppDoc.MultiPostDataUploadDoc()
         self.connect(self.doc, SIGNAL('sigDocUpdateStatusBar'),
                                            self.updateStatusBar)
 
