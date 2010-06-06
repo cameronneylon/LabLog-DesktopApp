@@ -19,8 +19,9 @@
 # Dependencies: The application code requires PyQt and Qt to be installed. 
 # The desktopAppDoc module utilises the lablogpost module available with
 # this source distribution and separately with a ccZero public domain
-# waiver at ####. The application requires a range of modules from the 
-# Python 2.6 standard library. 
+# waiver at http://github.com/cameronneylon/LaBLog-Utilities. The 
+# application requires a range of modules from the Python 2.6 standard 
+# library.  
 
 import sys
 import os.path
@@ -29,16 +30,16 @@ import logging
 import lablogpost
 from PyQt4.QtCore import *
 
-class MultiPostDoc(QObject):
-    """Document for a multi-post directory data upload
+class AbstractPostDoc(QObject):
+    """Abstract base class with common methods for Post Documents
 
-    Document model class that describes the information for the 
-    posting of a directory of data files as a set of blog posts.
-    Includes information on the possible blog server, selected 
-    blog server, the target blog housed on that server, as well as
-    possible usernames, selected usernames, post content, post 
-    title, whether to use the filenames as post titles, and the
-    local path to the target directory"""
+    The Abstract class currently holds notions of the blog server
+    blogs, usernames, and current blogs as well as elements for
+    the post objects of PostTitle and PostContent. Both are 
+    assumed to be QStrings. Specific document classes will treat
+    these strings in different ways. If a non-QString Title or
+    Content are required these methods should be overwritten.
+    """
 
     def __init__(self, *args):
         QObject.__init__(self, *args)
@@ -50,13 +51,9 @@ class MultiPostDoc(QObject):
         self.initCurrentBlog()
 
         self.initPostTitle()
-        self.initUseFilename()
         self.initPostContent()
 
-        self.initDataDirectory()
         self.status = []
-
-
 
     def initBlogServerList(self):
         self.blogserverlist = ['http://biolab.isis.rl.ac.uk',
@@ -178,23 +175,6 @@ class MultiPostDoc(QObject):
     def getPostTitle(self):
         return self.posttitle
 
-    def initUseFilename(self):
-        self.usefilename = False
-
-    def setUseFilename(self, boolean):
-        try:
-            assert type(boolean) == bool, 'UseFileName must be True or False'
-            self.usefilename = boolean
-            self.emit(SIGNAL('sigDocUseFilenameChanged'), (self.usefilename,))
-            return True
-
-        except AssertionError, e:
-            self.emit(SIGNAL('sigDocumentError'), (e, ))
-            return False
-
-    def getUseFilename(self):
-        return self.usefilename
-
     def initPostContent(self):
         self.postcontent = ''
 
@@ -212,6 +192,45 @@ class MultiPostDoc(QObject):
 
     def getPostContent(self):
         return self.postcontent
+
+
+class MultiPostDoc(AbstractPostDoc):
+    """Document for a multi-post directory data upload
+
+    Document model class that describes the information for the 
+    posting of a directory of data files as a set of blog posts.
+    Includes information on the possible blog server, selected 
+    blog server, the target blog housed on that server, as well as
+    possible usernames, selected usernames, post content, post 
+    title, whether to use the filenames as post titles, and the
+    local path to the target directory"""
+
+    def __init__(self, *args):
+        AbstractPostDoc.__init__(self, *args)
+
+        self.initPostTitle()
+        self.initUseFilename()
+        self.initPostContent()
+
+        self.initDataDirectory()
+        self.status = []
+
+    def initUseFilename(self):
+        self.usefilename = False
+
+    def setUseFilename(self, boolean):
+        try:
+            assert type(boolean) == bool, 'UseFileName must be True or False'
+            self.usefilename = boolean
+            self.emit(SIGNAL('sigDocUseFilenameChanged'), (self.usefilename,))
+            return True
+
+        except AssertionError, e:
+            self.emit(SIGNAL('sigDocumentError'), (e, ))
+            return False
+
+    def getUseFilename(self):
+        return self.usefilename
 
     def initDataDirectory(self):
         self.datadirectory = ''
