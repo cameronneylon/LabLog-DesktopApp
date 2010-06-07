@@ -400,12 +400,12 @@ class MultiPostCreationDoc(AbstractPostDoc):
         """Specific upload method for multiple post creation
         """
 
-         # Check that required information is available
+        logging.debug('Starting mutlple post creation upload')
+        # Check that required information is available
         try:
-            assert ((self.posttitle != '') or 
-                    (self.usefilename == True)), 'Need post title'
+            assert self.posttitle != '', 'Need post title'
             assert self.postcontent != '', 'Need post text'
-            assert self.postnums > 0, 'Doing less than one post?'
+            assert self.numposts > 0, 'Doing less than one post?'
 
         
         # If insufficient information is available raise a warning dialog
@@ -417,14 +417,14 @@ class MultiPostCreationDoc(AbstractPostDoc):
         # TODO handle metadata
         inputdictionary = {'username'   : self.prefs.getCurrentUsername(),
                            'content'    : self.getPostContent(),
-                           'section'    : 'Testing API'
+                           'section'    : 'Testing API',
                            'blog_sname' : self.prefs.getCurrentBlog(),
                            'metadata'   : None}
 
         # Send signals that upload is about to start
         self.status.append('Sending posts to server')
         self.emit(SIGNAL('sigDocUpdateStatusBar'))
-        self.emit(SIGNAL('sigDocUploading')
+        self.emit(SIGNAL('sigDocUploading'))
 
         # Set up some counters for the upload process
         i=0
@@ -433,7 +433,7 @@ class MultiPostCreationDoc(AbstractPostDoc):
         self.post_success = 0
         
         # Do the uploads
-        while i <= self.postnums:
+        while i <= self.numposts:
             i+=1
             #Setup the post title
             inputdictionary['title'] = self.postitle + '-' + str(i)
@@ -444,11 +444,15 @@ class MultiPostCreationDoc(AbstractPostDoc):
 
             if post.posted:
                 self.post_success += 1
-                self.emit(SIGNAL('sigDocPostUploadSuccess')
+                self.emit(SIGNAL('sigDocPostUploadSuccess'))
 
             elif post.posted == False:
                 self.post_fail += 1
                 self.post_failures.append(i)
+
+            else:
+                # raise ValueError('post.posted should be type bool')
+                pass
 
         #TODO retry the posting for those that have failed?
 

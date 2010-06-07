@@ -124,7 +124,7 @@ class AbstractPostView(QWidget):
         # Multipost data upload complete
         # TODO generalise the upload complete signal
         self.connect(self.doc, SIGNAL('sigDocFinishedUploading'),
-                               self.notifyUserDataUploadComplete)
+                               self.notifyUserUploadComplete)
 
 
     ####################
@@ -191,6 +191,19 @@ class AbstractPostView(QWidget):
         """
 
         self.setDisabled(True)
+
+    def notifyUserUploadComplete(self):
+        """Dialog box triggered when data upload is complete
+
+        This method should be overwritten in a subclass if required 
+        to provide a more detailed message to the user. Any 
+        overwritten method should ensure that the close all method is
+        called.
+        """
+        
+        message = ("Upload succeeded") 
+        notify = QMessageBox.warning(self,
+                             'QtMessageBox.warning()', message)
 
     ####################
     #
@@ -376,7 +389,7 @@ class MultiPostDataUploadView(AbstractPostView):
             self.dirTextBox.setText(self.doc.datadirectory) 
 
 
-    def notifyUserDataUploadComplete(self):
+    def notifyUserUploadComplete(self):
         """Dialog box triggered when data upload is complete
         """
         
@@ -440,8 +453,8 @@ class MultiPostCreationView(AbstractPostView):
         self.grid.addWidget(self.titleedit, 0, 1)
         self.grid.addWidget(self.spinboxlabel, 1, 0)
         self.grid.addWidget(self.numpostspinbox, 1, 1)
-        self.grid.addWidget(self.posttexttitle, 1, 0)
-        self.grid.addWidget(self.posttext, 1, 1, 1, 2)
+        self.grid.addWidget(self.posttexttitle, 2, 0)
+        self.grid.addWidget(self.posttext, 2, 1, 2, 2)
         self.grid.addWidget(QLabel(''), 3, 0)
         self.grid.addWidget(self.uploadButton, 5, 2)
 

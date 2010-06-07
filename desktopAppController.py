@@ -40,6 +40,7 @@ class desktopApp(QMainWindow):
         self.initMenuBar()
         #self.initToolBar()
         self.initStatusBar()
+        logging.debug('Initialising new app session')
 
 
     def initActions(self):
@@ -169,7 +170,7 @@ class desktopApp(QMainWindow):
     def initGeneralDocConnections(self):
         """The general function for connecting signals common to to all docs
         """
-        self.connect(self.doc, SIGNAL('sigDocUpdateStatusBar'),
+        self.connect(self.prefs, SIGNAL('sigDocUpdateStatusBar'),
                                            self.updateStatusBar)
 
     def initGeneralViewConnections(self):
@@ -186,6 +187,8 @@ class desktopApp(QMainWindow):
                                 self.notifyDocTitleModified)
         self.connect(self.view, SIGNAL('sigViewPostTextModified'),
                                 self.notifyDocPostTextModified)
+        self.connect(self.view, SIGNAL('sigViewDoUpload'),
+                                self.notifyDocDoUpload)
 
     def initMultiPostDataUploadDoc(self):
         """The initialisation method for MultiPostDataUpload Docs
@@ -215,8 +218,7 @@ class desktopApp(QMainWindow):
         # Connect all the signals that are specific to this view/doc pair
         self.connect(self.view, SIGNAL('sigViewDataDirModified'),
                                 self.notifyDocDataDirModified)
-        self.connect(self.view, SIGNAL('sigViewDoUpload'),
-                                self.notifyDocDoUpload)
+
         self.connect(self.view, SIGNAL('sigViewUseFilenameCheckedTRUE'),
                                 self.notifyDocUseFilenameCheckedTrue)
         self.connect(self.view, SIGNAL('sigViewUseFilenameCheckedFALSE'),
@@ -273,7 +275,7 @@ class desktopApp(QMainWindow):
         intiatilisation methods when the appropriate menu item from the
         blog actions menu is selected.
         """
-
+        logging.debug('Initialising MultiPost Data Upload')
         self.initMultiPostDataUploadDoc()
         self.initMultiPostDataUploadView()
 
@@ -281,7 +283,7 @@ class desktopApp(QMainWindow):
     def slotMultiPostCreation(self):
         """The initialisaton method for multiple post creation
         """
-
+        logging.debug('Initialising Multiple Post Creation')
         self.initMultiPostCreationDoc()
         self.initMultiPostCreationView()
 
@@ -313,7 +315,7 @@ class desktopApp(QMainWindow):
     def notifyDocPostTextModified(self):
         """Notify the document when post content box changed
         """
-        logging.debug('Setting Post Title: ' + self.view.posttext.toPlainText())
+        logging.debug('Setting Post Content: ' + self.view.posttext.toPlainText())
         self.doc.setPostContent(self.view.posttext.toPlainText())
 
     def notifyDocDoUpload(self):
@@ -345,6 +347,7 @@ class desktopApp(QMainWindow):
         """
         logging.debug('Setting Post Title: ' + self.view.dirTextBox.text())
         self.doc.setDataDirectory(self.view.dirTextBox.text())
+
 
     ####################
     # Slots from the MultiPostDataUpload UI
@@ -387,7 +390,7 @@ class desktopApp(QMainWindow):
         """Update the status bar with the contents of self.doc.status
         """
 
-        self.statusBar().showMessage(self.view.doc.status[-1])
+        self.statusBar().showMessage(self.prefs.status[-1])
 
 
 def main(args):
