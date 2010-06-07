@@ -43,20 +43,36 @@ class desktopApp(QMainWindow):
 
 
     def initActions(self):
+        """Function to initialise generic actions
+        
+        Actions that are initialised here include FileQuit which
+        is not currently implemented. The multiple post Data
+        upload action and the multple post creatiomn action.
+        """
+
         #fileQuitIcon=QIconSet(QPixmap(filequit))
         self.actions = {}
-        self.actions['fileQuit'] = QAction('Exit', self)
 
+        self.actions['fileQuit'] = QAction('Exit', self)
         self.connect(self.actions['fileQuit'],
                      SIGNAL('activated()'),
                      self.slotFileQuit)
 
+        # Action for multi post Data Upload
         self.actions['multiPostDataUpload'] = QAction('Data upload', 
                                                       self)
-
         self.connect(self.actions['multiPostDataUpload'],
                      SIGNAL('activated()'),
                      self.slotMultiPostDataUpload)
+
+        # Action for multiple post creation
+        self.actions['multiPostCreation'] = QAction('Multiple posts',
+                                                    self)
+        self.connect(self.actions['multiPostCreation'],
+                     SIGNAL('activated()'),
+                     self.slotMultiPostCreation)
+
+
     
     def initPrefsDoc(self):
         """Function that initialises the preferences doc
@@ -88,6 +104,7 @@ class desktopApp(QMainWindow):
         self.blogactionsmenu = QMenu()
         self.blogactionsmenu.setTitle('&Blog actions')
         self.blogactionsmenu.addAction(self.actions['multiPostDataUpload'])
+        self.blogactionsmenu.addAction(self.actions['multiPostCreation'])
         # Then add Blog Actions Menu to menu bar
         self.menuBar().addMenu(self.blogactionsmenu)
 
@@ -205,7 +222,26 @@ class desktopApp(QMainWindow):
         self.connect(self.view, SIGNAL('sigViewUseFilenameCheckedFALSE'),
                                 self.notifyDocUseFilenameCheckedFalse)
 
+    def initMultiPostCreationDoc(self):
+        """Init method for multiple post creation document
+        """
 
+        self.doc = desktopAppDoc.MultiPostCreationDoc(self.prefs)
+        self.initGeneralDocConnections()
+
+    def initMultiPostCreationView(self):
+        """Init method for the multiple post creation view
+        """
+
+        # Create the view and call general connections function
+        self.view = desktopAppView.MultiPostCreationView(self.doc)
+        self.initGeneralViewConnections()
+
+        # Connect all the specific connections for this view/doc pair
+        # The only new connection for this action is the spinbox
+        self.connect(self.view, SIGNAL('sigViewNumpostsChanged'),
+                                self.notifyDocNumpostsValueChanged)
+        
 
 
 ###########################################
@@ -225,20 +261,29 @@ class desktopApp(QMainWindow):
 
 
     def slotMultiPostDataUpload(self):
-        self.initMultiPostDataUploadDoc()
-        self.initMultiPostDataUploadView()
+        """Initialisation method for the Multi Post Data Upload
 
+        This function is called when the data upload is selected
+        from the blog actions menu. It in turn calls the initialisation
+        functions for the appropriate document and view subclasses.
 
-    def slotDoSomeOtherInteractionWithTheBlog(self):
-        """A template method for creating new forms of interaction
-
-        To create a new type of action that the application can support on
+        It is also useful as a template for other types of action.To 
+        create a new type of action that the application can support on
         the blog it is necessary to create a method here that will call the
         intiatilisation methods when the appropriate menu item from the
         blog actions menu is selected.
         """
 
-        pass
+        self.initMultiPostDataUploadDoc()
+        self.initMultiPostDataUploadView()
+
+
+    def slotMultiPostCreation(self):
+        """The initialisaton method for multiple post creation
+        """
+
+        self.initMultiPostCreationDoc()
+        self.initMultiPostCreationView()
 
 
     ####################
@@ -301,6 +346,16 @@ class desktopApp(QMainWindow):
         logging.debug('Setting Post Title: ' + self.view.dirTextBox.text())
         self.doc.setDataDirectory(self.view.dirTextBox.text())
 
+    ####################
+    # Slots from the MultiPostDataUpload UI
+    ####################
+
+    def notifyDocNumpostsValueChanged(self):
+        """Notify the document when the numposts spingbox value changes
+        """
+        logging.debug('Numposts Spinbox set to: ' +
+                        str(self.view.numpostspinbox.value()))
+        self.doc.setNumPosts(self.view.numpostspinbox.value())
 
     ####################
     # Slots from the document that require menu or statusbar changes

@@ -221,6 +221,16 @@ class AbstractPostView(QWidget):
         self.emit(SIGNAL('sigViewDoUpload'))
 
 class MultiPostDataUploadView(AbstractPostView):
+    """View for a multi-post directory data upload
+
+    View that holds the interface widgets for preparing a set of
+    posts each represents and has attached one of the files 
+    contained in a directory. The view provides a Usefilename
+    checkbox which sets the post titles to be that of the filename
+    and a directory upload button which calls a file dialog to select
+    a directory. The selected directory is displayed in a line edit.
+    """
+
     def __init__(self, doc, *args):
         apply(AbstractPostView.__init__, (self, doc) + args)
 
@@ -406,10 +416,102 @@ class MultiPostDataUploadView(AbstractPostView):
         else:
             pass
 
+class MultiPostCreationView(AbstractPostView):
+    """View for creating multiple posts with incrementing titles
+
+    The MultiPostCreation method is intended to suppor the creation of
+    multiple posts that increment in a predictable way. Usually these
+    will be a set of physical samples, fractions, or reactions that
+    are to be represented by a set of essentially identical posts.
+
+    The view for this blog interaction only requires title, content,
+    and a selection roll bar for the number of posts required. 
+    """
+
+    def __init__(self, doc, *args):
+        apply(AbstractPostView.__init__, (self, doc) + args)
+
+        # Create a spinbox to select number of incremented posts
+        self.spinboxlabel = QLabel('Number of posts required')
+        self.numpostspinbox = QSpinBox()
+
+        # Layout the widgets
+        self.grid.addWidget(self.posttitle, 0, 0)
+        self.grid.addWidget(self.titleedit, 0, 1)
+        self.grid.addWidget(self.spinboxlabel, 1, 0)
+        self.grid.addWidget(self.numpostspinbox, 1, 1)
+        self.grid.addWidget(self.posttexttitle, 1, 0)
+        self.grid.addWidget(self.posttext, 1, 1, 1, 2)
+        self.grid.addWidget(QLabel(''), 3, 0)
+        self.grid.addWidget(self.uploadButton, 5, 2)
+
+        self.setLayout(self.grid)
+
+        ####################
+        #
+        # Connections to actions to be notified to the document
+        #
+        # These actions need to signal the Controller so as to trigger
+        # other actions. For the multiple post upload the new 
+        # required signal is that the spin box to select number of posts
+        # has changed.
+        # 
+        ####################
+
+        # NumPosts Spinbox state changed
+        self.connect(self.numpostspinbox, SIGNAL('valueChanged(int)'),
+                                      self.emitNumpostSpinboxChanged)
+
+        ####################
+        #
+        # Connections to signals originating in the App Document
+        #
+        # Signals specific to the MultiPostCreationDataUpload View are the
+        # signal emitted when the numposts internal variable is changed
+        # in the document e.g. by a scripted or macro event. 
+        #
+        ####################
+
+        # Numposts variable changed in the document
+        self.connect(self.doc, SIGNAL('sigDocNumPostsChanged'),
+                                        self.setNumpostSpinBox)
+
+    ####################
+    #
+    # Methods for handling incoming signals from the Document
+    #
+    # Specific methods required for the MultiPostCreation view
+    # are to update the numposts spinbox
+    #
+    ####################
+
+    def setNumpostSpinBox(self):
+        """Function to set the spinbox to the state of the doc variable
+        """
+
+        # If both are the same then do nothing to avoid race condition
+        if self.doc.numposts == self.numpostspinbox.value():
+            pass
+
+        else:
+            self.numpostspinbox.setValue(self.doc.numposts)
 
 
+    ####################
+    #
+    # Methods for notifying actions to the App Controller
+    #
+    # Specific actions from the GUI for the MultiPostCreation View 
+    # that need to notify the document of include notifying that the
+    # the numposts spinbox value has been changed
+    #
+    ####################
 
 
+    def emitNumpostSpinboxChanged(self):
+        """Signal to the AppController that SpinBox value has changed
+        """
+        self.emit(SIGNAL('sigViewNumpostsChanged'))
 
 
 
