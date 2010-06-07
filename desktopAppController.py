@@ -178,7 +178,7 @@ class desktopApp(QMainWindow):
         otherwise the document will not exist to connect the signals from.
         """
 
-        self.doc = desktopAppDoc.MultiPostDataUploadDoc()
+        self.doc = desktopAppDoc.MultiPostDataUploadDoc(self.prefs)
         self.initGeneralDocConnections()
 
     def initMultiPostDataUploadView(self):

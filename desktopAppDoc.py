@@ -180,11 +180,12 @@ class AbstractPostDoc(QObject):
     to provide the template for the more specific upload methods.
     """
 
-    def __init__(self, *args):
+    def __init__(self, prefs, *args):
         QObject.__init__(self, *args)
 
         self.initPostTitle()
         self.initPostContent()
+        self.prefs = prefs
 
         self.status = []
 
@@ -272,8 +273,8 @@ class MultiPostDataUploadDoc(AbstractPostDoc):
     the post content is not modified.
     """
 
-    def __init__(self, *args):
-        AbstractPostDoc.__init__(self, *args)
+    def __init__(self, prefs, *args):
+        AbstractPostDoc.__init__(self, prefs, *args)
 
         self.initUseFilename()
         self.initDataDirectory()
@@ -345,17 +346,16 @@ class MultiPostDataUploadDoc(AbstractPostDoc):
                    'postnames'  : str(self.posttitle),
                    'posttext'   : str(self.postcontent),
                    'metadata'   : {'key1':'value1'},
-                   'server_url' : str(self.currentblogserver),
-                   'blog_sname' : str(self.currentblog),
-                   'username'   : str(self.currentusername),
+                   'server_url' : str(self.prefs.currentblogserver),
+                   'blog_sname' : str(self.prefs.currentblog),
+                   'username'   : str(self.prefs.currentusername),
                    'section'    : 'API Testing',
                    'uid'        : lablogpost.DEFAULT_UID
                    })
 
         self.data_fail, self.post_fail, self.length = posts.doUpload()
-        self.emit(SIGNAL('sigDocFinishedUploading'))
-
         self.status.append('Uploaded ' + str(self.length) + ' data objects')
+        self.emit(SIGNAL('sigDocFinishedUploading'))
 
 
 class MultiPostCreationDoc(AbstractPostDoc):
@@ -373,12 +373,11 @@ class MultiPostCreationDoc(AbstractPostDoc):
     post.
     """
 
-    def __init__(self, *args):
-        AbstractPostDoc.__init__(self, *args)
+    def __init__(self, prefs, *args):
+        AbstractPostDoc.__init__(self, prefs,*args)
 
         # Internal variable for setting number of posts required
         self.numposts = 0
-
 
     def setNumPosts(self, integer):
         """Function to set the number of posts required
@@ -414,18 +413,49 @@ class MultiPostCreationDoc(AbstractPostDoc):
             self.emit(SIGNAL('sigDocumentError'), (e, ))
             return False
 
-        # TODO signal to notify uploading. Need to sort out passing
-        # of blog id, server, and UID from the preferences document
-        i=1
-        self.post_fail = 0
-        while i <= self.postnums:
-            inputdictionary['title'] = self.postitle + str(i)
-            post = lablogpost.LaBLogPost(**inputdictionary)
-            post.doPost()
+        # Prepare a dictionary to call the LabLogPost init method
+        # TODO handle metadata
+        inputdictionary = {'username'   : self.prefs.getCurrentUsername(),
+                           'content'    : self.getPostContent(),
+                           'section'    : 'Testing API'
+                           'blog_sname' : self.prefs.getCurrentBlog(),
+                           'metadata'   : None}
 
-        # TODO notify that uploading is complete
-            
-            
+        # Send signals that upload is about to start
+        self.status.append('Sending posts to server')
+        self.emit(SIGNAL('sigDocUpdateStatusBar'))
+        self.emit(SIGNAL('sigDocUploading')
+
+        # Set up some counters for the upload process
+        i=0
+        self.post_fail = 0
+        self.post_failures = []
+        self.post_success = 0
+        
+        # Do the uploads
+        while i <= self.postnums:
+            i+=1
+            #Setup the post title
+            inputdictionary['title'] = self.postitle + '-' + str(i)
+            #Create the post and upload it
+            post = lablogpost.LaBLogPost(**inputdictionary)
+            post.doPost(url = self.prefs.getCurrentBlogServer()
+                        )
+
+            if post.posted:
+                self.post_success += 1
+                self.emit(SIGNAL('sigDocPostUploadSuccess')
+
+            elif post.posted == False:
+                self.post_fail += 1
+                self.post_failures.append(i)
+
+        #TODO retry the posting for those that have failed?
+
+        # Signal that upload is complete and update status
+        self.status.append('Uploaded ' + str(i) + 'posts with ' +
+                           self.postfail + ' failures.')
+        self.emit(SIGNAL('sigDocFinishedUploading'))            
        
 
 ###############################################################
