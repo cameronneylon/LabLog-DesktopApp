@@ -28,7 +28,7 @@ from xml.etree import ElementTree as ET
 
 MAX_MEM = 50000
 DEFAULT_URL = 'http://biolab.isis.rl.ac.uk'
-DEFAULT_UID = 'a' ## insert UID here for testing
+DEFAULT_UID = '' # add a default UID here
 DEFAULT_USERNAME = 'cameronneylon.net'
 
 socket.setdefaulttimeout(10)
@@ -455,6 +455,8 @@ class LaBLogPost(LaBLogObject):
         # Check that self.posted is False
         assert self.posted == False
 
+        logging.debug(self.title)
+        logging.debug(type(self.title))
         # First check that the required elements are there
         assert self.title != None and type(self.title) == str
         assert self.username != None and type (self.title) == str
@@ -468,6 +470,7 @@ class LaBLogPost(LaBLogObject):
         # Set up the Request object
         requesturl = url + '/api/rest/addpost/uid/' + uid
         request = urllib.urlencode({'request':self.postxml})
+        logging.debug(request)
         post = urllib2.Request(requesturl, data=request)
 
         response = urllib2.urlopen(post)

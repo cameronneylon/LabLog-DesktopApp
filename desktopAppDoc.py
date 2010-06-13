@@ -416,7 +416,7 @@ class MultiPostCreationDoc(AbstractPostDoc):
         # Prepare a dictionary to call the LabLogPost init method
         # TODO handle metadata
         inputdictionary = {'username'   : self.prefs.getCurrentUsername(),
-                           'content'    : self.getPostContent(),
+                           'content'    : str(self.getPostContent()),
                            'section'    : 'Testing API',
                            'blog_sname' : self.prefs.getCurrentBlog(),
                            'metadata'   : None}
@@ -433,14 +433,14 @@ class MultiPostCreationDoc(AbstractPostDoc):
         self.post_success = 0
         
         # Do the uploads
-        while i <= self.numposts:
+        while i < self.numposts:
             i+=1
             #Setup the post title
-            inputdictionary['title'] = self.postitle + '-' + str(i)
+            inputdictionary['title'] = str(self.getPostTitle()) + '-' + str(i)
             #Create the post and upload it
             post = lablogpost.LaBLogPost(**inputdictionary)
-            post.doPost(url = self.prefs.getCurrentBlogServer()
-                        )
+            post.doPost(url = self.prefs.getCurrentBlogServer(),
+                        uid = lablogpost.DEFAULT_UID)
 
             if post.posted:
                 self.post_success += 1
@@ -458,7 +458,7 @@ class MultiPostCreationDoc(AbstractPostDoc):
 
         # Signal that upload is complete and update status
         self.status.append('Uploaded ' + str(i) + 'posts with ' +
-                           self.postfail + ' failures.')
+                           str(self.post_fail) + ' failures.')
         self.emit(SIGNAL('sigDocFinishedUploading'))            
        
 
