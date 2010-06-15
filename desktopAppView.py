@@ -25,6 +25,7 @@
 
 import sys
 import os.path
+import widget_metadata
 from PyQt4.QtGui import *
 from PyQt4.QtCore import *
 
@@ -61,6 +62,9 @@ class AbstractPostView(QWidget):
         # Text box for post names
         self.posttitle = QLabel('Post title')
         self.titleedit = QLineEdit()
+
+        # Metadata widget
+        self.metadatawidget = widget_metadata.MetadataWidget()
 
         # Text box for post text content. Only accepts plain text
         # TODO metadata setting
@@ -252,19 +256,20 @@ class MultiPostDataUploadView(AbstractPostView):
         self.usefilenamecheck = QCheckBox('Use filenames?', self)
 
         # Button to open file dialogue and text edit to display path
-        self.selectDirButton = QPushButton('Select directory', self)
+        self.selectDirButton = QPushButton('Select data directory', self)
         self.dirTextBox = QLineEdit()
 
         # Setting up the layout of the widget
         self.grid.addWidget(self.posttitle, 0, 0)
         self.grid.addWidget(self.titleedit, 0, 1)
         self.grid.addWidget(self.usefilenamecheck, 0, 2)
-        self.grid.addWidget(self.posttexttitle, 1, 0)
-        self.grid.addWidget(self.posttext, 1, 1, 1, 2)
-        self.grid.addWidget(QLabel(''), 3, 0)
-        self.grid.addWidget(self.selectDirButton, 4, 0)
-        self.grid.addWidget(self.dirTextBox, 4, 1, 1, 2)
-        self.grid.addWidget(self.uploadButton, 5, 2)
+        self.grid.addWidget(self.metadatawidget, 1, 1)
+        self.grid.addWidget(self.posttexttitle, 2, 0)
+        self.grid.addWidget(self.posttext, 2, 1, 2, 2)
+        self.grid.addWidget(QLabel(''), 4, 0)
+        self.grid.addWidget(self.selectDirButton, 5, 0)
+        self.grid.addWidget(self.dirTextBox, 5, 1, 1, 2)
+        self.grid.addWidget(self.uploadButton, 6, 2)
 
         self.setLayout(self.grid)
 
@@ -450,13 +455,14 @@ class MultiPostCreationView(AbstractPostView):
 
         # Layout the widgets
         self.grid.addWidget(self.posttitle, 0, 0)
-        self.grid.addWidget(self.titleedit, 0, 1)
-        self.grid.addWidget(self.spinboxlabel, 1, 0)
-        self.grid.addWidget(self.numpostspinbox, 1, 1)
-        self.grid.addWidget(self.posttexttitle, 2, 0)
-        self.grid.addWidget(self.posttext, 2, 1, 2, 2)
-        self.grid.addWidget(QLabel(''), 3, 0)
-        self.grid.addWidget(self.uploadButton, 5, 2)
+        self.grid.addWidget(self.titleedit, 1, 0, 1, 2)
+        self.grid.addWidget(self.spinboxlabel, 0, 2)
+        self.grid.addWidget(self.numpostspinbox, 1, 2)
+        self.grid.addWidget(self.metadatawidget, 2, 1)
+        self.grid.addWidget(self.posttexttitle, 3, 0)
+        self.grid.addWidget(self.posttext, 3, 1, 3, 2)
+        self.grid.addWidget(QLabel(''), 4, 0)
+        self.grid.addWidget(self.uploadButton, 6, 2)
 
         self.setLayout(self.grid)
 
