@@ -28,7 +28,7 @@ from xml.etree import ElementTree as ET
 
 MAX_MEM = 50000
 DEFAULT_URL = 'http://biolab.isis.rl.ac.uk'
-DEFAULT_UID = '8352d8248d4aee4d6b77c718806aa049' 
+DEFAULT_UID = '' 
 DEFAULT_USERNAME = 'ethem.myopenid.com'
 
 socket.setdefaulttimeout(10)
