@@ -319,21 +319,21 @@ class desktopApp(QMainWindow):
     def notifyDocSectionChanged(self):
         """Notify the document when post section changed
         """
-        logging.debug('Setting Post Section: ' 
+        logging.debug('desktopAppController: Setting Post Section: ' 
                              + self.view.metadatawidget.getSection())
         self.doc.setPostSection(self.view.metadatawidget.getSection())
 
     def notifyDocMetadataChanged(self):
         """Notify the document when metadata widget changes
         """
-        logging.debug('Metadata Widget Changed: ' 
+        logging.debug('desktopAppController: Metadata Widget Changed: ' 
                       + str(self.view.metadatawidget.getMetadata()))
         self.doc.setPostMetadata(self.view.metadatawidget.getMetadata())
 
     def notifyDocPostTextModified(self):
         """Notify the document when post content box changed
         """
-        logging.debug('Setting Post Content: ' 
+        logging.debug('desktopAppController: Setting Post Content: ' 
                           + self.view.posttext.toPlainText())
         self.doc.setPostContent(self.view.posttext.toPlainText())
 
@@ -350,14 +350,14 @@ class desktopApp(QMainWindow):
     def notifyDocUseFilenameCheckedTrue(self):
         """Notify the document when usefilename checked
         """
-        logging.debug('UseFilenameCheck: ' + 
+        logging.debug('desktopAppController: UseFilenameCheck: ' + 
                       str(self.view.usefilenamecheck.isChecked()))
         self.doc.setUseFilename(True)
 
     def notifyDocUseFilenameCheckedFalse(self):
         """Notify the document when usefilename unchecked
         """
-        logging.debug('UseFilenameCheck: ' + 
+        logging.debug('desktopAppController: UseFilenameCheck: ' + 
                       str(self.view.usefilenamecheck.isChecked()))
         self.doc.setUseFilename(False)     
 

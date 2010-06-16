@@ -23,7 +23,7 @@ class MenuPair(QWidget):
         self.keymenu.setEditable(True)
         self.initKeyMenu()
         self.connect(self.keymenu, 
-                          SIGNAL('currentIndexChanged'),
+                          SIGNAL('currentIndexChanged(QString)'),
                           self.keyMenuItemSelected)
 
         # Set up the value menu
@@ -31,7 +31,7 @@ class MenuPair(QWidget):
         self.valuemenu.setEditable(True)
         self.initValuesMenu()
         self.connect(self.valuemenu,
-                          SIGNAL('currentIndexChanged'),
+                          SIGNAL('currentIndexChanged(QString)'),
                           self.valueMenuItemSelected)
 
         # Organise the layout
@@ -42,25 +42,28 @@ class MenuPair(QWidget):
         # Send signal that menupair created
         self.emit(SIGNAL('menuPairCreated'))
 
-    def keyMenuItemSelected(self, menuitem):
+    def keyMenuItemSelected(self):
         """Method to capture a new key menu selection 
 
         Method calles when menu item is selected manually or
         programmatically. Need to capture the item Text and
         set self.key and then reinitialise the value menu.
         """
-        logging.debug("Key Menu Item triggered: " + menuitem)
-        self.key = menuitem
+        logging.debug("widget_metadata: Key Menu Item triggered: " 
+                            + self.keymenu.currentText())
+        self.key = self.keymenu.currentText()
         self.initValuesMenu()
         self.emit(SIGNAL('keyMenuActivated'))
-        logging.debug('Emitted keyMenuAcivated')
+        logging.debug('widget_metadata: Emitted keyMenuAcivated')
 
     def valueMenuItemSelected(self):
         """Method to capture a new value menu selection
         """
-        self.value = self.valuemenu.itemText()
+        logging.debug("widget_metadata: Value menu triggered: "
+                              + self.valuemenu.currentText())
+        self.value = self.valuemenu.currentText()
         self.emit(SIGNAL('valueMenuActivated'))
-        logging.debug('Emitted valueMenuActivated')
+        logging.debug('widget_metadata: Emitted valueMenuActivated')
         
 
     def initKeyMenu(self):
@@ -83,7 +86,8 @@ class MenuPair(QWidget):
         the menu is populated with these.
         """
         
-        logging.debug("Initialising Value Menu with key: " + str(self.key))
+        logging.debug("widget_metadata: Initialising Value Menu with key: "
+                                 + str(self.key))
         # Clear the values menu
         self.valuemenu.clear()
         # If the key is in the mapping dictionary with associated values
@@ -96,12 +100,14 @@ class MenuPair(QWidget):
 
         # Otherwise just leave the menu blank
         else:
-            logging.debug("Self.key not in mapping dict")
+            logging.debug("widget_metadata: Self.key not in mapping dict")
 
     def getKey(self):
+        logging.debug("widget_metadata: Getting key: " + str(self.key))
         return self.key
 
     def getValue(self):
+        logging.debug("widget_metadata: Getting value: " + str(self.value))
         return self.value
 
     def setKeyMenuEnabled(self, boolean):
@@ -157,7 +163,7 @@ class MetadataWidget(QWidget):
         self.section = MenuPair(keymenuitems = ['Section'],
                                 keytovaluesmapping = self.keytovaluesmapping)
         self.section.keymenu.setEnabled(False)
-        self.connect(self.section, SIGNAL('valueMenuActivated()'),
+        self.connect(self.section, SIGNAL('valueMenuActivated'),
                                    self.emitSectionChanged)
 
         # Set up the plus button
@@ -193,9 +199,9 @@ class MetadataWidget(QWidget):
         # Add menupair reference to list
         self.menupairlist.append(newmenupair)
         # Connect new menupair signals
-        self.connect(newmenupair, SIGNAL('keyMenuActivated()'),
+        self.connect(newmenupair, SIGNAL('keyMenuActivated'),
                                    self.emitMetadataChanged)
-        self.connect(newmenupair, SIGNAL('valueMenuActivated()'),
+        self.connect(newmenupair, SIGNAL('valueMenuActivated'),
                                    self.emitMetadataChanged)
         # Setup the position of the new menupair at bottom of current ones
         self.grid.addWidget(self.menupairlist[-1], 
@@ -237,27 +243,33 @@ class MetadataWidget(QWidget):
         """Method to notify view that section has been changed
         """
         self.emit(SIGNAL('metadataWidgetSectionChanged'))
-        logging.debug('Emitted metadataWidgetSectionChanged')
+        logging.debug('widget_metadata:Emitted metadataWidgetSectionChanged')
 
     def emitMetadataChanged(self):
         """Method to provide internal and external signal on menu change
         """
         self.emit(SIGNAL('metadataWidgetActivated'))
-        logging.debug('Emitted metadataWidgetActivated')
+        logging.debug('widgetmetadata: Emitted metadataWidgetActivated')
+
+    def getSection(self):
+        """Method to return section as a Python string
+        """
+        return str(self.section.getValue())
 
     def getMetadata(self):
         """Method to return metadata as dictionary
 
         Method creates a dictionary by iterating over the menupairs
         and obtaining the key and value for each one. Any cases where
-        the getKey() and getValue() methods return None are then popped
-        from the dictionary.
+        the getKey() and getValue() methods return None are not added.
+        Keys and values are both converted to strings before being sent
+        onwards.
         """
 
         self.metadata = {}
         for menupair in self.menupairlist:
             if menupair.getKey() and menupair.getValue():
-                self.metadata[menupair.getKey()] = menupair.getValue()
+                self.metadata[str(menupair.getKey())] = str(menupair.getValue())
 
         return self.metadata
 

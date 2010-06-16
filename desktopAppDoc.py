@@ -212,9 +212,10 @@ class AbstractPostDoc(QObject):
         self.postsecton = ''
 
     def setPostSection(self, string):
-        logging.debug('Set Post Metadata: Received: ' + str(dictionary))
+        logging.debug('desktopAppDoc: Set Post Section: Received: ' 
+                                                   + str(string))
         try: 
-            assert type(string) == QString, 'Metadata must be a dictionary'
+            assert type(string) == str, 'Section must be a string'
             self.postsection = str(string)
             self.emit(SIGNAL('sigDocPostSectionSet'), (self.postsection,))
             return True
@@ -223,13 +224,14 @@ class AbstractPostDoc(QObject):
             return False
 
     def getPostSection(self):
-        return self.postmetadata
+        return self.postsection
     
     def initPostMetadata(self):
         self.postmetadata = {}
 
     def setPostMetadata(self, dictionary):
-        logging.debug('Set Post Metadata: Received: ' + str(dictionary))
+        logging.debug('desktopAppDoc: Set Post Metadata: Received: ' 
+                                                + str(dictionary))
         try: 
             assert type(dictionary) == dict, 'Metadata must be a dictionary'
             self.postmetadata = dictionary
@@ -240,7 +242,7 @@ class AbstractPostDoc(QObject):
             return False
 
     def getPostMetadata(self):
-        return self.postmetdata
+        return self.postmetadata
 
     def initPostContent(self):
         self.postcontent = ''

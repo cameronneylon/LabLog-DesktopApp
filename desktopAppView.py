@@ -25,6 +25,7 @@
 
 import sys
 import os.path
+import logging
 import widget_metadata
 from PyQt4.QtGui import *
 from PyQt4.QtCore import *
@@ -92,11 +93,11 @@ class AbstractPostView(QWidget):
 
         # Action on the post section changed in metadata widget
         self.connect(self.metadatawidget, 
-                          SIGNAL('metadataWidgetSectionChanged()'),
+                          SIGNAL('metadataWidgetSectionChanged'),
                                      self.emitViewSectionChanged)
 
         # Action on modifying the metadata widget
-        self.connect(self.metadatawidget, SIGNAL('metadataWidgetActivated()'),
+        self.connect(self.metadatawidget, SIGNAL('metadataWidgetActivated'),
                                           self.emitViewMetadataChanged)
 
         # Action on modifying the Post Content text edit
