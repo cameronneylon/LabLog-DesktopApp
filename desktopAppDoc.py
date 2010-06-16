@@ -51,9 +51,7 @@ class PrefsDoc(QObject):
         self.status=[]
 
     def initBlogServerList(self):
-        self.blogserverlist = ['http://biolab.isis.rl.ac.uk',
-                               'http://blogs.chem.soton.ac.uk',
-                               'http://blog_dev.sidious.chem.soton.ac.uk']
+        self.blogserverlist = ['http://biolab.isis.rl.ac.uk']
 
     def initCurrentBlogServer(self):
         self.currentblogserver = 'http://biolab.isis.rl.ac.uk'
@@ -61,11 +59,7 @@ class PrefsDoc(QObject):
     def initServertoBlogMapping(self):
         self.servertoblogmapping = {
           'http://biolab.isis.rl.ac.uk'   : 
-              ["testing_sandpit", "camerons_labblog", "Lab Materials Login"],
-          'http://blogs.chem.soton.ac.uk' : 
-              ["frey_group", "bio_sandpit"],
-          'http://blog_dev.sidious.chem.soton.ac.uk' :
-              ["frey_group", "bio_sandpit"]
+              ["ibrahim", "lab_materials", "testing_sandpit"]
                           }
 
     def setCurrentBlogServer(self, index):
@@ -120,11 +114,7 @@ class PrefsDoc(QObject):
 
     def getUsernamesforCurrentBlogServer(self):
         self.usernamemapping = {
-            'http://biolab.isis.rl.ac.uk'   : ['cameronneylon.net',
-                                              'cameron.neylon.myopenid.com',
-                                               ],
-            'http://blogs.chem.soton.ac.uk' : ['dcn', 'ajm3'],
-            'http://blog_dev.sidious.chem.soton.ac.uk' : ['dcn', 'ajm3']
+            'http://biolab.isis.rl.ac.uk'   : ['ethem.myopenid.com']
                           }
         return self.usernamemapping[self.currentblogserver]
 
@@ -186,6 +176,7 @@ class AbstractPostDoc(QObject):
         self.initPostTitle()
         self.initPostContent()
         self.initPostMetadata()
+        self.initPostSection()
         self.prefs = prefs
 
         self.status = []
@@ -209,7 +200,10 @@ class AbstractPostDoc(QObject):
         return self.posttitle
 
     def initPostSection(self):
-        self.postsecton = ''
+        self.postsection = 'Material'
+        # This is a dreadful hack to make sure that the default setting
+        # is registered. Needs to be sorted when the document properly
+        # knows about the blog metadata
 
     def setPostSection(self, string):
         logging.debug('desktopAppDoc: Set Post Section: Received: ' 

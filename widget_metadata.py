@@ -74,6 +74,8 @@ class MenuPair(QWidget):
             self.keymenu.addItem(key)
         if len(self.keymenuitems) > 0:
             self.key = self.keymenuitems[0]
+            self.emit(SIGNAL('keyMenuActivated'))
+            logging.debug('widget_metadata: Emitted keyMenuActivated')
 
     def initValuesMenu(self):
         """Initialise values in the Value Menu
@@ -89,16 +91,17 @@ class MenuPair(QWidget):
         logging.debug("widget_metadata: Initialising Value Menu with key: "
                                  + str(self.key))
         # Clear the values menu
-        self.valuemenu.clear()
+
         # If the key is in the mapping dictionary with associated values
         # then populate the menu with those values
         if str(self.key) in self.keytovaluesmapping:
-            print self.keytovaluesmapping[str(self.key)]
-
+            self.valuemenu.clear()
             for value in self.keytovaluesmapping[str(self.key)]:
                 self.valuemenu.addItem(value)
-
-        # Otherwise just leave the menu blank
+            self.value = self.keytovaluesmapping[str(self.key)][0]
+            self.emit(SIGNAL('valueMenuActivated'))
+            logging.debug('widget_metadata: Emitted valueMenuActivated')
+        # Otherwise just leave the menu as is
         else:
             logging.debug("widget_metadata: Self.key not in mapping dict")
 
@@ -165,6 +168,8 @@ class MetadataWidget(QWidget):
         self.section.keymenu.setEnabled(False)
         self.connect(self.section, SIGNAL('valueMenuActivated'),
                                    self.emitSectionChanged)
+        # Ensure that the default setting gets registered by Doc
+        self.emitSectionChanged()
 
         # Set up the plus button
         self.plusbutton = QToolButton()
@@ -198,11 +203,15 @@ class MetadataWidget(QWidget):
                                keytovaluesmapping = self.keytovaluesmapping)
         # Add menupair reference to list
         self.menupairlist.append(newmenupair)
-        # Connect new menupair signals
+
+        # Connect new menupair signals and ensure defaults are registered
+        # with the document
         self.connect(newmenupair, SIGNAL('keyMenuActivated'),
                                    self.emitMetadataChanged)
         self.connect(newmenupair, SIGNAL('valueMenuActivated'),
                                    self.emitMetadataChanged)
+        self.emitMetadataChanged()
+
         # Setup the position of the new menupair at bottom of current ones
         self.grid.addWidget(self.menupairlist[-1], 
                                (len(self.menupairlist)+1), 0)

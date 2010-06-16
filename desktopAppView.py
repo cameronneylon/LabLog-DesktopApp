@@ -64,8 +64,18 @@ class AbstractPostView(QWidget):
         self.posttitle = QLabel('Post title')
         self.titleedit = QLineEdit()
 
-        # Metadata widget
-        self.metadatawidget = widget_metadata.MetadataWidget()
+        # Metadata widget - setup with hardcoded metadata options
+        # for Ibrahim
+        self.metadatawidget = widget_metadata.MetadataWidget(
+             keymenuitems = ['Material_Type', 'Procedure', 'Data_Type', 'Note'],
+             keytovaluesmapping = 
+                 {'Section'       : ['Material', 'Procedure', 'Data', 'Note'], 
+                  'Material_Type' : ['Solution', 'Powder', 'Solid'],
+                  'Procedure'     : ['Labelling', 'Gel_electrophoresis',
+                                      'Cell_culture', 'Protein_purification'],
+                  'Data_Type'     : ['Gel_image', 'FPLC trace', 
+                                     'Fluorescence_data', 'Other_Excel_file'],
+                  'Project'       : ['Sortase_optimisation']})
 
         # Text box for post text content. Only accepts plain text
         # TODO metadata setting
