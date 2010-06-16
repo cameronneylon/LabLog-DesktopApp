@@ -185,6 +185,10 @@ class desktopApp(QMainWindow):
         # Connect UI event signals to slot functions
         self.connect(self.view, SIGNAL('sigViewTitleModified'),
                                 self.notifyDocTitleModified)
+        self.connect(self.view, SIGNAL('sigViewSectionChanged'),
+                                self.notifyDocSectionChanged)
+        self.connect(self.view, SIGNAL('sigViewMetadataChanged'),
+                                self.notifyDocMetadataChanged)
         self.connect(self.view, SIGNAL('sigViewPostTextModified'),
                                 self.notifyDocPostTextModified)
         self.connect(self.view, SIGNAL('sigViewDoUpload'),
@@ -312,10 +316,25 @@ class desktopApp(QMainWindow):
         logging.debug('Setting Post Title: ' + self.view.titleedit.text())
         self.doc.setPostTitle(self.view.titleedit.text())
 
+    def notifyDocSectionChanged(self):
+        """Notify the document when post section changed
+        """
+        logging.debug('Setting Post Section: ' 
+                             + self.view.metadatawidget.getSection())
+        self.doc.setPostSection(self.view.metadatawidget.getSection())
+
+    def notifyDocMetadataChanged(self):
+        """Notify the document when metadata widget changes
+        """
+        logging.debug('Metadata Widget Changed: ' 
+                      + str(self.view.metadatawidget.getMetadata())
+        self.doc.setPostMetadata(self.view.metadatawidget.getMetadata())
+
     def notifyDocPostTextModified(self):
         """Notify the document when post content box changed
         """
-        logging.debug('Setting Post Content: ' + self.view.posttext.toPlainText())
+        logging.debug('Setting Post Content: ' 
+                          + self.view.posttext.toPlainText())
         self.doc.setPostContent(self.view.posttext.toPlainText())
 
     def notifyDocDoUpload(self):

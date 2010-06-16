@@ -90,6 +90,15 @@ class AbstractPostView(QWidget):
         self.connect(self.titleedit, SIGNAL('editingFinished()'),
                                      self.emitViewTitleModified)
 
+        # Action on the post section changed in metadata widget
+        self.connect(self.metadatawidget, 
+                          SIGNAL('metadataWidgetSectionChanged()'),
+                                     self.emitViewSectionChanged)
+
+        # Action on modifying the metadata widget
+        self.connect(self.metadatawidget, SIGNAL('metadataWidgetActivated()'),
+                                          self.emitViewMetadataChanged)
+
         # Action on modifying the Post Content text edit
         self.connect(self.posttext, SIGNAL('textChanged()'),
                                     self.emitViewPostTextModified)
@@ -224,6 +233,16 @@ class AbstractPostView(QWidget):
         """Notify the document when title line edit changed
         """
         self.emit(SIGNAL('sigViewTitleModified'))
+
+    def emitViewSectionChanged(self):
+        """Notify the document when the post secton has been changed
+        """
+        self.emit(SIGNAL('sigViewSectionChanged'))
+
+    def emitViewMetaDataChanged(self):
+        """Notify the document when the metadata widget is changed
+        """
+        self.emit(SIGNAL('sigViewMetadataChanged'))
 
     def emitViewPostTextModified(self):
         """Notify the document when post content box changed

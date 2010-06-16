@@ -185,6 +185,7 @@ class AbstractPostDoc(QObject):
 
         self.initPostTitle()
         self.initPostContent()
+        self.initPostMetadata()
         self.prefs = prefs
 
         self.status = []
@@ -206,6 +207,40 @@ class AbstractPostDoc(QObject):
 
     def getPostTitle(self):
         return self.posttitle
+
+    def initPostSection(self):
+        self.postsecton = ''
+
+    def setPostSection(self, string):
+        logging.debug('Set Post Metadata: Received: ' + str(dictionary))
+        try: 
+            assert type(string) == QString, 'Metadata must be a dictionary'
+            self.postsection = str(string)
+            self.emit(SIGNAL('sigDocPostSectionSet'), self.postsection,))
+            return True
+        except AssertionError, e:
+            self.emit(SIGNAL('sigDocumentError'), (e, ))
+            return False
+
+    def getPostSection(self):
+        return self.postmetadata
+    
+    def initPostMetadata(self):
+        self.postmetadata = {}
+
+    def setPostMetadata(self, dictionary):
+        logging.debug('Set Post Metadata: Received: ' + str(dictionary))
+        try: 
+            assert type(dictionary) == dict, 'Metadata must be a dictionary'
+            self.postmetadata = dictionary
+            self.emit(SIGNAL('sigDocPostMetadataSet'), self.postmetadata,))
+            return True
+        except AssertionError, e:
+            self.emit(SIGNAL('sigDocumentError'), (e, ))
+            return False
+
+    def getPostMetadata(self):
+        return self.postmetdata
 
     def initPostContent(self):
         self.postcontent = ''
@@ -341,18 +376,20 @@ class MultiPostDataUploadDoc(AbstractPostDoc):
         for file in os.listdir(self.datadirectory):
             self.filelist.append(os.path.join(self.datadirectory, file))
 
+
         posts = lablogpost.MultiDataFileUpload(
                 **{'filelist'   : self.filelist,
                    'postnames'  : str(self.posttitle),
                    'posttext'   : str(self.postcontent),
-                   'metadata'   : {'key1':'value1'},
+                   'metadata'   : self.getPostMetadata,
                    'server_url' : str(self.prefs.currentblogserver),
                    'blog_sname' : str(self.prefs.currentblog),
                    'username'   : str(self.prefs.currentusername),
-                   'section'    : 'API Testing',
+                   'section'    : self.getPostSection()]
                    'uid'        : lablogpost.DEFAULT_UID
                    })
 
+        # Record the set of successes and fails and send signals
         self.data_fail, self.post_fail, self.length = posts.doUpload()
         self.status.append('Uploaded ' + str(self.length) + ' data objects')
         self.emit(SIGNAL('sigDocFinishedUploading'))
@@ -361,7 +398,7 @@ class MultiPostDataUploadDoc(AbstractPostDoc):
 class MultiPostCreationDoc(AbstractPostDoc):
     """A class to support the creation of sets of incremented posts
 
-    The MultiPostCreation method is intended to suppor the creation of
+    The MultiPostCreation method is intended to support the creation of
     multiple posts that increment in a predictable way. Usually these
     will be a set of physical samples, fractions, or reactions that
     are to be represented by a set of essentially identical posts.
@@ -417,9 +454,9 @@ class MultiPostCreationDoc(AbstractPostDoc):
         # TODO handle metadata
         inputdictionary = {'username'   : self.prefs.getCurrentUsername(),
                            'content'    : str(self.getPostContent()),
-                           'section'    : 'Testing API',
+                           'section'    : self.getPostSection(),
                            'blog_sname' : self.prefs.getCurrentBlog(),
-                           'metadata'   : None}
+                           'metadata'   : self.getPostMetadata()}
 
         # Send signals that upload is about to start
         self.status.append('Sending posts to server')
