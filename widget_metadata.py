@@ -23,21 +23,24 @@ class MenuPair(QWidget):
         self.keymenu.setEditable(True)
         self.initKeyMenu()
         self.connect(self.keymenu, 
-                          SIGNAL('currentIndexChanged(QString)'),
+                          SIGNAL('currentIndexChanged'),
                           self.keyMenuItemSelected)
 
         # Set up the value menu
         self.valuemenu = QComboBox()
         self.valuemenu.setEditable(True)
         self.initValuesMenu()
-        self.connect(self.keymenu,
-                          SIGNAL('currentIndexChanged(text)'),
+        self.connect(self.valuemenu,
+                          SIGNAL('currentIndexChanged'),
                           self.valueMenuItemSelected)
 
         # Organise the layout
         self.hbox.addWidget(self.keymenu)
         self.hbox.addWidget(self.valuemenu)
         self.setLayout(self.hbox)
+
+        # Send signal that menupair created
+        self.emit(SIGNAL('menuPairCreated'))
 
     def keyMenuItemSelected(self, menuitem):
         """Method to capture a new key menu selection 
@@ -49,11 +52,15 @@ class MenuPair(QWidget):
         logging.debug("Key Menu Item triggered: " + menuitem)
         self.key = menuitem
         self.initValuesMenu()
+        self.emit(SIGNAL('keyMenuActivated'))
+        logging.debug('Emitted keyMenuAcivated')
 
     def valueMenuItemSelected(self):
         """Method to capture a new value menu selection
         """
         self.value = self.valuemenu.itemText()
+        self.emit(SIGNAL('valueMenuActivated'))
+        logging.debug('Emitted valueMenuActivated')
         
 
     def initKeyMenu(self):
@@ -150,7 +157,8 @@ class MetadataWidget(QWidget):
         self.section = MenuPair(keymenuitems = ['Section'],
                                 keytovaluesmapping = self.keytovaluesmapping)
         self.section.keymenu.setEnabled(False)
-        
+        self.connect(self.section, SIGNAL('valueMenuActivated()'),
+                                   self.emitSectionChanged)
 
         # Set up the plus button
         self.plusbutton = QToolButton()
@@ -184,6 +192,11 @@ class MetadataWidget(QWidget):
                                keytovaluesmapping = self.keytovaluesmapping)
         # Add menupair reference to list
         self.menupairlist.append(newmenupair)
+        # Connect new menupair signals
+        self.connect(newmenupair, SIGNAL('keyMenuActivated()'),
+                                   self.emitMetadataChanged)
+        self.connect(newmenupair, SIGNAL('valueMenuActivated()'),
+                                   self.emitMetadataChanged)
         # Setup the position of the new menupair at bottom of current ones
         self.grid.addWidget(self.menupairlist[-1], 
                                (len(self.menupairlist)+1), 0)
@@ -220,6 +233,18 @@ class MetadataWidget(QWidget):
         self.grid.addWidget(self.plusbutton, (len(self.menupairlist)+1), 1)
         self.grid.addWidget(self.minusbutton, (len(self.menupairlist)+1), 2)
 
+    def emitSectionChanged(self):
+        """Method to notify view that section has been changed
+        """
+        self.emit(SIGNAL('metadataWidgetSectionChanged'))
+        logging.debug('Emitted metadataWidgetSectionChanged')
+
+    def emitMetadataChanged(self):
+        """Method to provide internal and external signal on menu change
+        """
+        self.emit(SIGNAL('metadataWidgetActivated'))
+        logging.debug('Emitted metadataWidgetActivated')
+
     def getMetadata(self):
         """Method to return metadata as dictionary
 
@@ -230,7 +255,6 @@ class MetadataWidget(QWidget):
         """
 
         self.metadata = {}
-        self.metadata['Section'] = self.section.getValue()
         for menupair in self.menupairlist:
             if menupair.getKey() and menupair.getValue():
                 self.metadata[menupair.getKey()] = menupair.getValue()
