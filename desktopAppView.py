@@ -238,11 +238,13 @@ class AbstractPostView(QWidget):
         """Notify the document when the post secton has been changed
         """
         self.emit(SIGNAL('sigViewSectionChanged'))
+        logging.debug('Emitted sigViewSectionChanged')
 
-    def emitViewMetaDataChanged(self):
+    def emitViewMetadataChanged(self):
         """Notify the document when the metadata widget is changed
         """
         self.emit(SIGNAL('sigViewMetadataChanged'))
+        logging.debug('Emitted sigViewMetadataChanged')
 
     def emitViewPostTextModified(self):
         """Notify the document when post content box changed

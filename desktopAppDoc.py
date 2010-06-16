@@ -216,7 +216,7 @@ class AbstractPostDoc(QObject):
         try: 
             assert type(string) == QString, 'Metadata must be a dictionary'
             self.postsection = str(string)
-            self.emit(SIGNAL('sigDocPostSectionSet'), self.postsection,))
+            self.emit(SIGNAL('sigDocPostSectionSet'), (self.postsection,))
             return True
         except AssertionError, e:
             self.emit(SIGNAL('sigDocumentError'), (e, ))
@@ -233,7 +233,7 @@ class AbstractPostDoc(QObject):
         try: 
             assert type(dictionary) == dict, 'Metadata must be a dictionary'
             self.postmetadata = dictionary
-            self.emit(SIGNAL('sigDocPostMetadataSet'), self.postmetadata,))
+            self.emit(SIGNAL('sigDocPostMetadataSet'), (self.postmetadata,))
             return True
         except AssertionError, e:
             self.emit(SIGNAL('sigDocumentError'), (e, ))
@@ -385,7 +385,7 @@ class MultiPostDataUploadDoc(AbstractPostDoc):
                    'server_url' : str(self.prefs.currentblogserver),
                    'blog_sname' : str(self.prefs.currentblog),
                    'username'   : str(self.prefs.currentusername),
-                   'section'    : self.getPostSection()]
+                   'section'    : self.getPostSection(),
                    'uid'        : lablogpost.DEFAULT_UID
                    })
 

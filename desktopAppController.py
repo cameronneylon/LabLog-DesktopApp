@@ -327,7 +327,7 @@ class desktopApp(QMainWindow):
         """Notify the document when metadata widget changes
         """
         logging.debug('Metadata Widget Changed: ' 
-                      + str(self.view.metadatawidget.getMetadata())
+                      + str(self.view.metadatawidget.getMetadata()))
         self.doc.setPostMetadata(self.view.metadatawidget.getMetadata())
 
     def notifyDocPostTextModified(self):
