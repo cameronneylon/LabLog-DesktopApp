@@ -272,7 +272,7 @@ class LaBLogData(LaBLogObject):
             return self.data_id
 
         else:
-            return None
+            return False
         
 
 class LaBLogPost(LaBLogObject):
@@ -332,6 +332,9 @@ class LaBLogPost(LaBLogObject):
 
     def set_content(self, content):
         self.content = content
+
+    def append_content(self, content):
+        self.content.append(content)
 
     def set_blog_id(self, blog_id):
         self.blog_id = blog_id
@@ -606,9 +609,65 @@ class MultiDataFileUpload(object):
                 
                 
                 
-            
+class BlogTable(object):
+    """A convenience class for creating and serializing tables for the blog
 
+    The basic data model is a simple array (list of lists). Tables are 
+    assumed to be ordered vertically so that additional samples/entires are 
+    added by creating a new row.
+    """
+
+    def __init__(self, input = None):
+        """Init method can take a set of lists and populate table"""
+
+        self.content = None
+        if self.checkInput(input):
+            self.replaceContent(input)
         
+    def checkInput(self, input):
+        """Method for checking that input is ok for table creation"""
+
+        # Check input is a list
+        if type input != list:
+            raise TypeError("Need a list for creation of table")
+            return False
+
+        # Check number of lists in input and that all rows are the same length
+        check = []
+        for row in input:
+            check.append(len(row))
+            if len(check) > 2 and check[-1] != check[-2]:
+                raise ValueError("Rows are not the same length")
+                return False
+        return True
+
+    def replaceContent(self, input):
+        self.content = input
+
+    def appendRow(self, input):
+        if len(input) != self.numberOfColumns():
+            raise ValueError("Row has wrong number of columns")
+            return False
+
+        self.content.append(input)
+        return len(self.content)
+
+    def numberOfRows(self):
+        return len(self.content)
+
+    def numberOfColumns(self):
+        return len(self.content[0])
+
+    def serialize(self):
+        table = "[table]"
+        for row in self.content:
+            table.append("[row]")
+            for column in row:
+                table.append(column + "[col]")
+            table.rstrip("[col]")
+            table.append("[/row]\n")
+        table.append("[/table]\n")
+        return table        
         
 
 
